@@ -1,0 +1,11 @@
+{
+    "target_overrides": {
+        "*": {
+            "platform.stdio-baud-rate": 230400,
+            "platform.stdio-convert-newlines": true,
+            "target.components": ["FLASHIAP"],
+            "target.macros_add": ["MBED_CONF_APP_MAIN_STACK_SIZE=8192"],
+            "target.printf_lib": "std"
+        }
+    }
+}Ï
