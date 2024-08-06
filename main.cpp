@@ -70,7 +70,7 @@
 
 #define LOG_NUM (4000u) // ログ保存数
 
-#define IMAGE_WIDTH 160  // 画像のX行数
+#define IMAGE_WIDTH 160  // 画像のX列数
 #define IMAGE_HEIGHT 120 // 画像のY行数
 
 //------------------------------------------------------------------//
@@ -137,6 +137,7 @@ unsigned long convertBCD_CharToLong(unsigned char hex);
 //------------------------------------------------------------------//
 // ここから自作関数のプロトタイプ宣言を追加
 //------------------------------------------------------------------//
+void createLineFlag(void); // ラインフラグを生成する関数　　    switch (counter++)内で画像更新につき一回ごと実行
 
 //------------------------------------------------------------------//
 // Global variable (NTSC-video)
@@ -195,7 +196,7 @@ volatile int msd_handle, msd_l, msd_r;
 
 volatile bool endflag = false;
 
-volatile bool lineflag_sentor = false;
+volatile bool lineflag_center = false;
 volatile bool lineflag_left = false;
 volatile bool lineflag_right = false;
 volatile bool lineflag_cross = false;
@@ -819,12 +820,18 @@ void intTimer(void)
               0x3c;
         break;
 
+    case 5:
+        // 画像更新ごとの更新処理
+        encoder.update();
+        createLineFlag();
+
+        break;
+
     case 6:
         MTU2TCNT_0 = 0;
         break;
 
     case 10:
-        encoder.update();
 
         if (endflag == false)
         {
@@ -1799,6 +1806,102 @@ unsigned char shikiichi_henkan(int gyou, int s, int sa)
 char getImage(int ix, int iy)
 {
     return ImageData_B[ix + 160U * iy];
+}
+
+///********************************************************************
+// ラインフラグを生成する関数
+// 引数なし(自分でプログラムを変えてフラグを生成するために必要な行数を指定できるようにして　　初期６０行目)
+// 戻り値：0～255
+///********************************************************************
+
+void createLineFlag(void)
+{
+    volatile int crosslineWidth = 60; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
+    volatile int centerWidth = 40;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+
+    volatile int rowNum = 60;               // ラインを検出する行数
+    volatile int brightnessThreshold = 200; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
+    volatile int imageData[IMAGE_WIDTH];    // 特定の一行のみの画像の明るさデータが格納される配列
+
+    volatile int leftCount;   // 画像の左側に閾値以上の値がどれくらいあるかをカウントする
+    volatile int rightCount;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
+    volatile int centerCount; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
+
+    volatile int crossCountThreshold = 50;  // 画像のクロスラインのカウント数の閾値
+    volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
+
+    // imageDataに画像データを格納する
+    for (int x = 0; x < IMAGE_WIDTH; x++)
+    {
+        imageData[x] = getImage(x, rowNum);
+    }
+
+    // レフトライン検出処理
+    for (int x = IMAGE_WIDTH / 2 - crosslineWidth / 2; x < IMAGE_WIDTH / 2; x++) // 画像の中心-クロスラインの幅の半分(レフトラインの幅)から画像の中心まで
+    {
+        if (imageData[x] > brightnessThreshold) // その画素が閾値よりも大きい値が来ていたらカウント++
+        {
+            leftCount++;
+        }
+    }
+
+    // leftCountがcrossCountThresholdの半分(レフトラインの判定基準)より多く判定されたらフラグtrue
+    if (leftCount > crossCountThreshold / 2)
+    {
+        lineflag_left = true;
+    }
+    else
+    {
+        lineflag_left = false;
+    }
+
+    // ここからは自分で読んで理解して！
+
+    //  ライトライン検出処理
+    for (int x = IMAGE_WIDTH; x < IMAGE_WIDTH / 2 + crosslineWidth / 2; x++)
+    {
+        if (imageData[x] > brightnessThreshold)
+        {
+            rightCount++;
+        }
+    }
+
+    if (rightCount > crossCountThreshold / 2)
+    {
+        lineflag_right = true;
+    }
+    else
+    {
+        lineflag_right = false;
+    }
+
+    // クロスライン判定(ライトラインとレフトラインが検出されてたらクロスライン判定)
+    if (lineflag_right == true && lineflag_left == true)
+    {
+        lineflag_cross = true;
+    }
+    else
+    {
+        lineflag_cross = false;
+    }
+
+    // 中心線があるかの検出
+    for (int x = IMAGE_WIDTH / 2 - centerWidth / 2; x < IMAGE_WIDTH / 2 + centerWidth / 2; x++)
+    {
+        if (imageData[x] > brightnessThreshold)
+        {
+            centerCount++;
+        }
+    }
+
+    if (centerCount > centerCountThreshold)
+    {
+        lineflag_center = true;
+    }
+    else
+    {
+        lineflag_center = false;
+    }
 }
 
 //------------------------------------------------------------------//
