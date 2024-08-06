@@ -20,7 +20,6 @@
 #include "iodefine.h"
 #include "mbed.h"
 #include <cstdio>
-
 //------------------------------------------------------------------//
 // Define
 //------------------------------------------------------------------//
@@ -58,15 +57,21 @@
 #define VIDEO_INT_TYPE (DisplayBase::INT_TYPE_S0_VFIELD)
 #define DATA_SIZE_PER_PIC (2u)
 
-//! Frame buffer stride: Frame buffer stride should be set to a multiple of 32
-//! or 128
+//! Frame buffer stride: Frame buffer stride should be set to a multiple of 32 or 128
 //  in accordance with the frame buffer burst transfer mode.
 #define PIXEL_HW (160u) // QVGA
 #define PIXEL_VW (120u) // QVGA
 #define VIDEO_BUFFER_STRIDE (((PIXEL_HW * DATA_SIZE_PER_PIC) + 31u) & ~31u)
 #define VIDEO_BUFFER_HEIGHT (PIXEL_VW)
 
+//------------------------------------------------------------------//
+// ここから自作defineを追加
+//------------------------------------------------------------------//
+
 #define LOG_NUM (4000u) // ログ保存数
+
+#define IMAGE_WIDTH 160  // 画像のX行数
+#define IMAGE_HEIGHT 120 // 画像のY行数
 
 //------------------------------------------------------------------//
 // Constructor
@@ -119,11 +124,7 @@ void motor(int accele_l, int accele_r);
 void handle(int angle);
 unsigned char dipsw_get(void);
 unsigned char shikiichi_henkan(int gyou, int s, int sa);
-unsigned char shikiichi_henkanline(int gyou, int s, int sa);
-
-unsigned char shikiichi_henkan2(int gyou, int s, int sa, int B1, int B2, int B3,
-                                int B4, int B5, int B6, int B7, int B8);
-int getImage(int ix, int iy);
+char getImage(int ix, int iy);
 
 int getCompileYear(const char *p);
 int getCompileMonth(const char *p);
@@ -134,12 +135,14 @@ int getCompilerSecond(const char *p);
 unsigned long convertBCD_CharToLong(unsigned char hex);
 
 //------------------------------------------------------------------//
+// ここから自作関数のプロトタイプ宣言を追加
+//------------------------------------------------------------------//
+
+//------------------------------------------------------------------//
 // Global variable (NTSC-video)
 //------------------------------------------------------------------//
-static uint8_t FrameBuffer_Video_A[VIDEO_BUFFER_STRIDE * VIDEO_BUFFER_HEIGHT]
-    __attribute((section("NC_BSS"), aligned(16))); // 16 bytes aligned!;
-static uint8_t FrameBuffer_Video_B[VIDEO_BUFFER_STRIDE * VIDEO_BUFFER_HEIGHT]
-    __attribute((section("NC_BSS"), aligned(16))); // 16 bytes aligned!;
+static uint8_t FrameBuffer_Video_A[VIDEO_BUFFER_STRIDE * VIDEO_BUFFER_HEIGHT] __attribute((section("NC_BSS"), aligned(16))); // 16 bytes aligned!;
+static uint8_t FrameBuffer_Video_B[VIDEO_BUFFER_STRIDE * VIDEO_BUFFER_HEIGHT] __attribute((section("NC_BSS"), aligned(16))); // 16 bytes aligned!;
 uint8_t *write_buff_addr = FrameBuffer_Video_A;
 uint8_t *save_buff_addr = FrameBuffer_Video_B;
 static volatile int32_t vsync_count;
@@ -178,8 +181,6 @@ volatile int debug_mode;
 FILE *fp;
 struct tm t; // microSDの日付用
 volatile unsigned char sensor_bin;
-volatile unsigned char sensor_bin2;
-
 volatile unsigned char bar;
 volatile int log_pattern = 901;
 volatile int log_mode; // 0:待機 1:ファイルオープン
@@ -187,33 +188,17 @@ volatile int log_mode; // 0:待機 1:ファイルオープン
                        // ※クローズしないとファイルが保存されない
 volatile int msdError;
 volatile int msd_handle, msd_l, msd_r;
-signed int minG, maxG, hensaG, HG, maxgyouG, mingyouG;
-// int atai[160];
-static signed int Ccount = 1;
-int bibunnG[160][120];
-void hennsa(void);
-int senn(int linegyou);
-volatile int syori;
-volatile int Hundle;
-volatile int masugu;
+
+//------------------------------------------------------------------//
+// ここから自作のグローバル変数を追加
+//------------------------------------------------------------------//
 
 volatile bool endflag = false;
 
-volatile static int LINEgyou;
-static int yakumonoLINE[30];
-static int yakumonoGYOU[30];
-
-volatile int ALL_hennsa[120];
-volatile int ALL_hennsa_sei[120];
-volatile int ALL_hennsa_hu[120];
-volatile int LINE_30_100[70][2];
-volatile int maespeed;
-volatile int leftflag;
-volatile int rightflag;
-volatile int crossflag;
-volatile int nolineflag;
-volatile int barflag;
-volatile int hazurereset;
+volatile bool lineflag_sentor = false;
+volatile bool lineflag_left = false;
+volatile bool lineflag_right = false;
+volatile bool lineflag_cross = false;
 
 typedef struct
 {
@@ -290,8 +275,7 @@ int main(void)
     set_time(seconds);
 
     SdUsbConnect storage("storage");
-    // storage.wait_connect(); //
-    // 認識するまでここで止まってしまうのでこの命令は使えない
+    // storage.wait_connect(); // 認識するまでここで止まってしまうのでこの命令は使えない
     cnt_msd = 0;
     while (storage.connect() == 0)
     { // STORAGE_NON = 0
@@ -349,173 +333,17 @@ int main(void)
                 switch (debug_mode)
                 {
                 case 1:
-
-                    // signed int min, max, hensa, H, maxgyou, mingyou;
-                    // int atai[160];
-                    // int bibunn[160];
-                    // min = 255;
-                    // max = 0;
-                    // for (int i = 30; i <= 129; i++)
-                    // {
-                    //     atai[i] = getImage(i, 118);
-                    // }
-                    // for (int v = 30; v <= 128; v++)
-                    // {
-                    //     int i, L, R;
-                    //     i = v + 1;
-                    //     L = atai[v];
-                    //     R = atai[i];
-                    //     bibunn[v] = L - R;
-                    // }
-
-                    // for (int i = 30; i <= 128; i++)
-                    // {
-                    //     if (max < bibunn[i])
-                    //     {
-                    //         max = bibunn[i]; // 8個のうち、最大を見つける
-                    //         maxgyou = i;
-                    //     }
-                    //     if (min > bibunn[i])
-                    //     {
-                    //         min = bibunn[i]; // 8個のうち、最小を見つける
-                    //         mingyou = i;
-                    //     }
-                    // }
-                    // hensa = (80 - ((maxgyou + mingyou) / 2));
-                    // if(){
-
-                    // }
-                    // H = hensa * 15 /20;
-                    // handle(H);
-                    // for (int i = 30; i <= 129; i++)
-                    // {
-                    //     printf("%d ", bibunn[i]);
-                    // }
-                    // printf("\n");
-                    // hennsa(60);
-                    // for (int i = 0; i <= 158; i++)
-                    // {
-                    //     printf("%d ", bibunnG[i]);
-                    // }
-                    // printf("\n");
-                    // printf("max=%d   maxgyou=%d   ", maxG, maxgyouG);
-                    // printf("min=%d   mingyou=%d   ", minG, mingyouG);
-                    // printf("syori=%d   ", syori);
-                    // printf("hensa=%d   \n", hensaG);
-
-                    // static int H;
-                    // static int HH;
-                    // int O, S;
-                    // static int A = 0;
-                    // H = hennsa(60);
-                    // // motor(100, 100);
-                    // // if (abs(H) < 4)
-                    // // {
-                    // //     H = 0;
-                    // // }
-
-                    // if (abs(H) < 10)
-                    // {
-                    //     O = 1;
-                    //     HH = H * -1 / 2;
-                    //     handle(HH);
-                    //     // handle(HH);
-                    //     // motor(100, 100);
-                    //     // if (H < 015
-                    //     // {
-                    //     //     handle((H * H * H /10000) / 2);
-
-                    //     //     motor(100, 100);
-                    //     // }
-                    //     // else
-                    //     // {
-                    //     //     handle((H * H * H / 10000) / -2);
-                    //     //     motor(100, 100);
-                    //     // }
-                    // }
-                    // else if (abs(H) > 20)
-                    // {
-                    //     O = 3;
-
-                    //     if (H < 0)
-                    //     {
-                    //         // HH = (H * H * H / 500) / 2;
-                    //         HH = H / 10;
-                    //         handle(HH);
-
-                    //         // motor(100 - H * 40 / 5, 100);
-                    //     }
-                    //     else
-                    //     {
-                    //         // HH = (H * H * H / 500) / -2;
-                    //         HH = H / 10;
-                    //         handle(HH);
-                    //         // motor(100, 100 - (H / 2) * 40 / 5);
-                    //     }
-                    // }
-                    // else
-                    // {
-                    //     O = 2;
-                    //     if (H < 0)
-                    //     {
-                    //         // HH = (H * H * H / 200) / 2;
-                    //         HH = H / 10;
-                    //         handle(HH);
-
-                    //         // motor(100, 100);
-                    //     }
-                    //     else
-                    //     {
-                    //         // HH = (H * H * H / 200) / -2;
-                    //         HH = H / 10;
-                    //         handle(HH);
-                    //         //  motor(100, 100);
-                    //     }cx
-                    // }
-                    // A = A + (S - HH);
-                    // S = HH;
-                    // handle(A);
-                    // printf("%d  %d  %d\n", O, H, HH);
-                    // hennsa(60)
-
-                    //  hennsa(60) * 28 / 100;
-                    // if (abs(hennsa(60)) > 50)
-                    // {
-                    //     Ccount = 0;
-                    // }
-                    // handle(hennsa(60) * 28 / 100);
-                    // // handle(0);
-                    // motor(0, 0);
-                    // for (int i = 0; i < 2; i++)
-                    // {
-                    //     printf("%d ", yakumonoGYOU[i]);
-                    // }
-                    // printf("\n");
-                    // for (int i = 0; i < 2; i++)
-                    // {
-                    //     printf("%x ", yakumonoLINE[i]);
-                    // }
-                    // printf("\n");
-                    printf("hennsa=%d", ALL_hennsa[45]);
-                    printf("　　　hennsaG=%d", hensaG);
-                    printf("　　　encodertotal関数=%d\n", encoder.getTotalCount());
-                    printf("　　　encodergetcnt関数=%d\n", encoder.getCnt());
-
                     // 補正値で表示 しきい値180以上を"1" 180を変えると、しきい値が変わる
-                    // printf("shikii chi 180\r\n");
-                    // for (y = 0; y < 30; y++)
-                    // {
-                    //     printf("%3d:%08ld ", y + 0,
-                    //     convertBCD_CharToLong(shikiichi_henkan(y + 0, 180, 8)));
-                    //     printf("%3d:%08ld ", y + 30,
-                    //     convertBCD_CharToLong(shikiichi_henkan(y + 30, 180, 8)));
-                    //     printf("%3d:%08ld ", y + 60,
-                    //     convertBCD_CharToLong(shikiichi_henkan(y + 60, 180, 8)));
-                    //     printf("%3d:%08ld ", y + 90,
-                    //     convertBCD_CharToLong(shikiichi_henkan(y + 90, 180, 8)));
-                    //     printf("\r\n");
-                    // }
-                    // printf("\033[H");
+                    printf("shikii chi 180\r\n");
+                    for (y = 0; y < 30; y++)
+                    {
+                        printf("%3d:%08ld ", y + 0, convertBCD_CharToLong(shikiichi_henkan(y + 0, 180, 8)));
+                        printf("%3d:%08ld ", y + 30, convertBCD_CharToLong(shikiichi_henkan(y + 30, 180, 8)));
+                        printf("%3d:%08ld ", y + 60, convertBCD_CharToLong(shikiichi_henkan(y + 60, 180, 8)));
+                        printf("%3d:%08ld ", y + 90, convertBCD_CharToLong(shikiichi_henkan(y + 90, 180, 8)));
+                        printf("\r\n");
+                    }
+                    printf("\033[H");
                     break;
 
                 case 2:
@@ -523,14 +351,10 @@ int main(void)
                     printf("shikii chi 120\r\n");
                     for (y = 0; y < 30; y++)
                     {
-                        printf("%3d:%08ld ", y + 0,
-                               convertBCD_CharToLong(shikiichi_henkan(y + 0, 120, 8)));
-                        printf("%3d:%08ld ", y + 30,
-                               convertBCD_CharToLong(shikiichi_henkan(y + 30, 120, 8)));
-                        printf("%3d:%08ld ", y + 60,
-                               convertBCD_CharToLong(shikiichi_henkan(y + 60, 120, 8)));
-                        printf("%3d:%08ld ", y + 90,
-                               convertBCD_CharToLong(shikiichi_henkan(y + 90, 120, 8)));
+                        printf("%3d:%08ld ", y + 0, convertBCD_CharToLong(shikiichi_henkan(y + 0, 120, 8)));
+                        printf("%3d:%08ld ", y + 30, convertBCD_CharToLong(shikiichi_henkan(y + 30, 120, 8)));
+                        printf("%3d:%08ld ", y + 60, convertBCD_CharToLong(shikiichi_henkan(y + 60, 120, 8)));
+                        printf("%3d:%08ld ", y + 90, convertBCD_CharToLong(shikiichi_henkan(y + 90, 120, 8)));
                         printf("\r\n");
                     }
                     printf("\033[H");
@@ -548,25 +372,16 @@ int main(void)
                     // \x1b[47m 灰 \x1b[49m デフォルトに戻す
 
                     // 1行飛ばしで表示(しきい値180以上を"1"とする)
-                    printf("shi 0         0         0         0         0         0      "
-                           "   0         0         0         0         1         1       "
-                           "  1         1         1         1        1\r\n");
-                    printf("kii 0         1         2         3         4         5      "
-                           "   6         7         8         9         0         1       "
-                           "  2         3         4         5        5\r\n");
-                    printf("180 "
-                           "0123456789012345678901234567890123456789012345678901234567890"
-                           "1234567890123456789012345678901234567890123456789012345678901"
-                           "23456789012345678901234567890123456789\r\n");
+                    printf("shi 0         0         0         0         0         0         0         0         0         0         1         1         1         1         1         1        1\r\n");
+                    printf("kii 0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5        5\r\n");
+                    printf("180 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\r\n");
                     for (y = 0; y < 120; y += 2)
                     {
                         printf("%03d:", y);
                         for (x = 0; x < 160; x++)
                         {
-                            c = getImage(x, y) >= 180 ? 1
-                                                      : 0; // 180を変えるとしきい値が変わる
-                            if (y == 60 && (x == 31 || x == 43 || x == 54 || x == 71 ||
-                                            x == 88 || x == 105 || x == 116 || x == 128))
+                            c = getImage(x, y) >= 180 ? 1 : 0; // 180を変えるとしきい値が変わる
+                            if (y == 60 && (x == 31 || x == 43 || x == 54 || x == 71 || x == 88 || x == 105 || x == 116 || x == 128))
                             {
                                 printf("\x1b[43m%d\x1b[49m", c);
                             }
@@ -582,25 +397,16 @@ int main(void)
 
                 case 4:
                     // 60～119行を表示(しきい値120以上を"1"とする)
-                    printf("shi 0         0         0         0         0         0      "
-                           "   0         0         0         0         1         1       "
-                           "  1         1         1         1        1\r\n");
-                    printf("kii 0         1         2         3         4         5      "
-                           "   6         7         8         9         0         1       "
-                           "  2         3         4         5        5\r\n");
-                    printf("120 "
-                           "0123456789012345678901234567890123456789012345678901234567890"
-                           "1234567890123456789012345678901234567890123456789012345678901"
-                           "23456789012345678901234567890123456789\r\n");
+                    printf("shi 0         0         0         0         0         0         0         0         0         0         1         1         1         1         1         1        1\r\n");
+                    printf("kii 0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5        5\r\n");
+                    printf("120 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789\r\n");
                     for (y = 60; y < 120; y++)
                     {
                         printf("%03d:", y);
                         for (x = 0; x < 160; x++)
                         {
-                            c = getImage(x, y) >= 120 ? 1
-                                                      : 0; // 120を変えるとしきい値が変わる
-                            if ((y == 110 || y == 111 || y == 112 || y == 113 || y == 114) &&
-                                (x == 31 || x == 128))
+                            c = getImage(x, y) >= 120 ? 1 : 0; // 120を変えるとしきい値が変わる
+                            if ((y == 110 || y == 111 || y == 112 || y == 113 || y == 114) && (x == 31 || x == 128))
                             {
                                 printf("\x1b[43m%d\x1b[49m", c);
                             }
@@ -621,10 +427,10 @@ int main(void)
     // 通常走行
     // ターミナルに出力とmicroSDへログ保存
     // 走行プログラムは、intTimer関数(1msごとの割り込み)で行う
-    // if (endflag == true)
-    // {
     while (1)
     {
+
+        // ログ保存処理
         if (endflag == true)
         {
             led_m(50, 1, 0, 0); // スタートバーセットOK状態→緑色点灯
@@ -693,7 +499,6 @@ int main(void)
             }
         }
     }
-    // }
 }
 
 ///****************************************************************
@@ -806,8 +611,7 @@ void init_Camera(void)
     }
 
     // Interrupt callback function setting (Vsync signal input to scaler 0)
-    error = Display.Graphics_Irq_Handler_Set(DisplayBase::INT_TYPE_S0_VI_VSYNC, 0,
-                                             IntCallbackFunc_Vsync);
+    error = Display.Graphics_Irq_Handler_Set(DisplayBase::INT_TYPE_S0_VI_VSYNC, 0, IntCallbackFunc_Vsync);
     if (error != DisplayBase::GRAPHICS_OK)
     {
         printf("Line %d, error %d\n", __LINE__, error);
@@ -817,9 +621,14 @@ void init_Camera(void)
 
     // Video capture setting (progressive form fixed)
     error = Display.Video_Write_Setting(
-        VIDEO_INPUT_CH, DisplayBase::COL_SYS_NTSC_358, write_buff_addr,
-        VIDEO_BUFFER_STRIDE, DisplayBase::VIDEO_FORMAT_YCBCR422,
-        DisplayBase::WR_RD_WRSWA_32_16BIT, PIXEL_VW, PIXEL_HW);
+        VIDEO_INPUT_CH,
+        DisplayBase::COL_SYS_NTSC_358,
+        write_buff_addr,
+        VIDEO_BUFFER_STRIDE,
+        DisplayBase::VIDEO_FORMAT_YCBCR422,
+        DisplayBase::WR_RD_WRSWA_32_16BIT,
+        PIXEL_VW,
+        PIXEL_HW);
     if (error != DisplayBase::GRAPHICS_OK)
     {
         printf("Line %d, error %d\n", __LINE__, error);
@@ -827,10 +636,8 @@ void init_Camera(void)
             ;
     }
 
-    // Interrupt callback function setting (Field end signal for recording
-    // function in scaler 0)
-    error = Display.Graphics_Irq_Handler_Set(VIDEO_INT_TYPE, 0,
-                                             IntCallbackFunc_Vfield);
+    // Interrupt callback function setting (Field end signal for recording function in scaler 0)
+    error = Display.Graphics_Irq_Handler_Set(VIDEO_INT_TYPE, 0, IntCallbackFunc_Vfield);
     if (error != DisplayBase::GRAPHICS_OK)
     {
         printf("Line %d, error %d\n", __LINE__, error);
@@ -891,8 +698,10 @@ void ChangeFrameBuffer(void)
         write_buff_addr = FrameBuffer_Video_A;
         save_buff_addr = FrameBuffer_Video_B;
     }
-    error = Display.Video_Write_Change(VIDEO_INPUT_CH, write_buff_addr,
-                                       VIDEO_BUFFER_STRIDE);
+    error = Display.Video_Write_Change(
+        VIDEO_INPUT_CH,
+        write_buff_addr,
+        VIDEO_BUFFER_STRIDE);
     if (error != DisplayBase::GRAPHICS_OK)
     {
         printf("Line %d, error %d\n", __LINE__, error);
@@ -969,23 +778,15 @@ static void WaitVsync(const int32_t wait_count)
 //------------------------------------------------------------------//
 void intTimer(void)
 {
-    volatile static int counter = 0; // Only variable for image process
-    volatile unsigned char b;
-    volatile static int Ecount;
-    volatile static int stahen = 0;
-    volatile static int stahen1 = 0;
-    volatile static int treline;
-
-    volatile static int kabutreline = 0;
-    volatile static int beforspeed;
-    volatile static int speedsa;
+    static int counter = 0; // Only variable for image process
+    unsigned char b;
 
     cnt1++;
     cnt_msdwritetime++;
     cnt_printf++;
     cnt_msd++;
     cnt_debug++;
-    encoder.kyoriupdate();
+
     // field check
     if (vfield_count2 != vfield_count2_buff)
     {
@@ -997,146 +798,34 @@ void intTimer(void)
     switch (counter++)
     {
     case 0:
-        ImageCopy(write_buff_addr, PIXEL_HW, PIXEL_VW, ImageData_A,
-                  vfield_count2); //  0 - 59行を変換
+        ImageCopy(write_buff_addr, PIXEL_HW, PIXEL_VW, ImageData_A, vfield_count2); //  0 - 59行を変換
         break;
     case 1:
-        ImageCopy(write_buff_addr, PIXEL_HW, PIXEL_VW, ImageData_A,
-                  vfield_count2); // 60 - 119行を変換
+        ImageCopy(write_buff_addr, PIXEL_HW, PIXEL_VW, ImageData_A, vfield_count2); // 60 - 119行を変換
         break;
     case 2:
-        Extraction_Brightness(ImageData_A, PIXEL_HW, PIXEL_VW, ImageData_B,
-                              vfield_count2);
+        Extraction_Brightness(ImageData_A, PIXEL_HW, PIXEL_VW, ImageData_B, vfield_count2);
         break;
     case 3:
-        Extraction_Brightness(ImageData_A, PIXEL_HW, PIXEL_VW, ImageData_B,
-                              vfield_count2);
+        Extraction_Brightness(ImageData_A, PIXEL_HW, PIXEL_VW, ImageData_B, vfield_count2);
 
-        sensor_bin = shikiichi_henkan(
-            60, 250, 8); //  60行目 しきい値180 隣同士の差分が8以下なら0x00にする
-
-        sensor_bin2 = shikiichi_henkanline(
-            90, 250, 8); //  60行目 しきい値180 隣同士の差分が8以下なら0x00にする
+        sensor_bin = shikiichi_henkan(60, 180, 8); //  60行目 しきい値180 隣同士の差分が8以下なら0x00にする
         // スタートバー検出 bit7とbit0のみ見る
-        bar = (shikiichi_henkan(110, 120, 8) | shikiichi_henkan(111, 120, 8) |
-               shikiichi_henkan(112, 120, 8) | shikiichi_henkan(113, 120, 8) |
-               shikiichi_henkan(114, 120, 8)) &
-              0x81; // 1000 0001　
-
-        // signed int min, max, hensa, H, maxgyou, mingyou, sotosenngyou, sotosenn;
-        // // int atai[160];
-        // // int bibunn[160];
-        // int waku[81];
-        // min = 255;
-        // max = 0;
-        // sotosenn = 255;
-        // for (int i = 30; i <= 129; i++)
-        // {
-        //     atai[i] = getImage(i, 60);
-        // }
-        // for (int i = 0; i <= 80; i++)
-        // {
-        //     waku[i] = atai[i] - atai[i - 1];
-        // }
-        // for (int i = 0; i <= 80; i++)
-        // {
-        //     if (sotosenn > waku[i])
-        //     {
-        //         sotosenn = waku[i]; // 8個のうち、最小を見つける
-        //         sotosenngyou = i;
-        //     }
-        // }
-        // for (int v = sotosenngyou + 5; v <= sotosenngyou + 90; v++)
-        // {
-
-        //     bibunn[v] = atai[v] - atai[v + 1];
-        // }
-
-        // for (int i = sotosenngyou + 5; i <= sotosenngyou + 90; i++)
-        // {
-        //     if (max < bibunn[i])
-        //     {
-        //         max = bibunn[i]; // 8個のうち、最大を見つける
-        //         maxgyou = i;
-        //     }
-        //     if (min > bibunn[i])
-        //     {
-        //         min = bibunn[i]; // 8個のうち、最小を見つける
-        //         mingyou = i;
-        //     }
-        // }
-        // hensa = (80 - ((maxgyou + mingyou) / 2));
-        // if (hensa >= -5 && hensa <= 5)
-        // {
-        //     hensa = 0;
-        // }
-
-        // max2 = max;
-        // min2 = min;
-        // maxgyou2 = maxgyou;
-
-        // mingyou2 = mingyou;
-        // hensa2 = hensa;
-        // H2 = H;
-
+        bar = (shikiichi_henkan(60, 120, 8) |
+               shikiichi_henkan(70, 120, 8) |
+               shikiichi_henkan(80, 120, 8) |
+               shikiichi_henkan(90, 120, 8) |
+               shikiichi_henkan(100, 120, 8)) &
+              0x3c;
         break;
-    case 5:
 
-        // MTU2TCNT_0 = 0;
-        if (encoder.getCnt() >= 42)
-        {
-            treline = 31;
-        }
-
-        else if (encoder.getCnt() >= 40)
-        {
-            treline = 35;
-        }
-
-        else
-        {
-            treline = 39;
-        }
-        hennsa();
-        senn(51);
-        if (encoder.getCnt() >= 41)
-        {
-            kabutreline = 50;
-        }
-
-        else if (encoder.getCnt() >= 35)
-        {
-            kabutreline = 50;
-        }
-
-        else
-        {
-            kabutreline = 50;
-        }
-
-        Hundle = ALL_hennsa[kabutreline] - 0;
-
-        stahen = ALL_hennsa[70] - 0;
-        stahen1 = ALL_hennsa[70] - 0;
-
-        masugu = ALL_hennsa[treline] - 0;
-        // senn();
-        break;
     case 6:
-        // for (int i2 = 0; i2 <= 159; i2++)
-        // {
-
-        //     printf("%d", getImage(i2, 60));
-        // }
-        // printf("\n");
-        //  Hundle = hennsa(60);
         MTU2TCNT_0 = 0;
         break;
+
     case 10:
-        maespeed = encoder.getCnt();
         encoder.update();
-        speedsa = encoder.getCnt() - beforspeed;
-        beforspeed = encoder.getCnt();
+
         if (endflag == false)
         {
             // ログ（RAM）記録
@@ -1144,26 +833,28 @@ void intTimer(void)
             log_data[log_no].pattern = pattern;
             log_data[log_no].convertBCD = sensor_inp(0xff);
             log_data[log_no].handle = msd_handle;
-            log_data[log_no].hennsa = ALL_hennsa[38];
-            log_data[log_no].hennsa = ALL_hennsa[38];
+            log_data[log_no].hennsa = 0; // 偏差を検出するプログラムを作ったら追加
             log_data[log_no].encoder = encoder.getCnt();
             log_data[log_no].motorL = msd_l;
             log_data[log_no].motorR = msd_r;
 
-            log_data[log_no].flagL = leftflag;
-            log_data[log_no].flagK = crossflag;
-            log_data[log_no].flagR = rightflag;
-            log_data[log_no].flagS = nolineflag;
+            log_data[log_no].flagL = check_leftline();
+            log_data[log_no].flagK = check_crossline();
+            log_data[log_no].flagR = check_rightline();
+            log_data[log_no].flagS = 0; // センターライン検出フラグを作ったら追加
 
             log_data[log_no].total = encoder.getTotalCount();
             log_data[log_no].total = encoder.getTotalCount();
+            for (int i = 0; i < 160; i++)
+            {
+                log_data[log_no].imageData0[i] = getImage(i, 60);
+            }
 
             log_no++;
         }
         break;
 
     default:
-
         break;
     }
 
@@ -1176,15 +867,13 @@ void intTimer(void)
                 // 走行プログラムは実行しない
     }
 
-    // モータドライブ基板のLED2個は、スタートバーの反応チェック用
-    // スタート時にLEDが点灯するようにセットする
+    // モータドライブ基板のLED2個は、スタートバーの反応チェック用 スタート時にLEDが点灯するようにセットする
     led_out(((bar & 0x80) >> 6) | (bar & 0x01));
 
     // GR-PEACHのUSER_LED(赤色)は、sensor_inp関数の中心2個のどれかが"1"なら、点灯する
     USER_LED = sensor_inp(0x18) != 0x00 ? 1 : 0;
 
-    if (pattern >= 11 && pattern <= 100 && user_button_get() == 1 &&
-        log_mode == 2)
+    if (pattern >= 11 && pattern <= 100 && user_button_get() == 1 && log_mode == 2)
     {
         pattern = 101;
         log_mode = 3; // ログ保存終了
@@ -1195,58 +884,48 @@ void intTimer(void)
 
     case 0:
         // スイッチ入力待ち
-        // if (pushsw_get() == 1)
+
+        // if (bar != 0x00)
         // {
-        //     pattern = 1;
-        //     log_mode = 1; // ログファイルオープン
-        //     cnt1 = 0;
-        //     break;
+        //     led_m(50, 0, 1, 0); // スタートバーセットOK状態→緑色点灯
+
+        //     if (pushsw_get() == 1)
+        //     {
+        //         pattern = 4;
+        //         log_mode = 1; // ログファイルオープン
+        //         cnt1 = 0;
+        //         encoder.clear();
+        //         break;
+        //     }
         // }
-        if (barflag == 0) // バースタート
-        // if (crossflag == 0)
+        // else
+        // {
+        led_m(10, 1, 0, 0); // スタートバーセットNG状態→赤色点灯
+        if (pushsw_get() == 1)
         {
-            if (pushsw_get() == 1)
-            {
-                pattern = 1;
-                log_mode = 1; // ログファイルオープン
-                cnt1 = 0;
-                cnt1 = 0;
-                break;
-            }
-            led_m(50, 0, 1, 0); // スタートバーセットOK状態→緑色点灯
+            pattern = 1;
+            log_mode = 1; // ログファイルオープン
+            cnt1 = 0;
+            cnt1 = 0;
+            break;
         }
-        else
-        {
-            if (pushsw_get() == 1) // ba-nasi
-            {
-                pattern = 4;
-                log_mode = 1; // ログファイルオープン
-                cnt1 = 0;
-                encoder.clear();
-                break;
-            }
-            led_m(10, 1, 0, 0); // スタートバーセットNG状態→赤色点灯
-        }
+        led_m(50, 0, 1, 0); // スタートバーセットOK状態→緑色点灯
+                            // }
         break;
 
     case 1:
-        // スタートバーが開いたかチェック
+
+        // 2秒たったらバーに向けてすすむ
         if (cnt1 >= 2000)
         {
             motor(20, 20);
         }
-        // handle(H * (25) / 100);}
 
-        //handle((stahen1) / 2.5);
-        handle(ALL_hennsa[60] * 50 / 100);
+        handle(0);
 
-
-        // if (bar == 1)
-        if (barflag == 1)
-       // if (pushsw_get() == 1) // ba-nasi
-
+        // スタートバーに到着したら
+        if (bar != 0x00)
         {
-            // スタート！！
             led_m(0, 0, 0, 0);
             log_mode = 2; // ログ記録中
             cnt_msdwritetime = 0;
@@ -1259,56 +938,40 @@ void intTimer(void)
         break;
 
     case 2:
-        handle(0);
 
-        // if (cnt1 >= 50)
-        // {
-        //     motor(-20, -20);
-        // }
-        // else{
+        handle(0);
         motor(0, 0);
 
-       // }
-       // if (cnt1 >= 50)
-        // if (crossflag == 0)
-        // bar == 0x00
-        if (barflag == 0&&cnt1 >= 1000)
-       // if (pushsw_get() == 1) // ba-nasi
-
+        if (bar == 0 && cnt1 >= 1000)
         {
             pattern = 3;
         }
 
-        // pattern = 11;
-        Ccount = 1;
         break;
+
     case 3:
-        // handle(0);
-        // handle(Hundle * ((abs(Hundle) * 15) / 10 + (encoder.getCnt() * 35) / 10) / 680);
-        handle(ALL_hennsa[60] * 50 / 100);
+        handle(0);
         motor(80, 80);
-       // if (encoder.getTotalCount() >= 0)
-            if (encoder.getTotalCount() >= 100)
-            {
-                pattern = 10;
-                cnt1 = 0;
-            }
+        if (encoder.getTotalCount() >= 100)
+        {
+            pattern = 10;
+            cnt1 = 0;
+        }
         break;
+
     case 4:
-        if (barflag == 0)
+        if (bar == 0)
         {
             pattern = 10;
         }
         break;
 
-   
     case 10:
         // スタートバーが開いたかチェック
         if (bar == 0x00)
         {
             // スタート！！
             led_m(0, 0, 0, 0);
-            //log_mode = 2; // ログ記録中
             cnt_msdwritetime = 0;
             pattern = 11;
             cnt1 = 0;
@@ -1319,477 +982,220 @@ void intTimer(void)
 
     case 11:
         // 通常トレース
-        led_m(10, 1, 1, 1);
-        volatile static int H;
-        volatile static int HH, L, R;
-        volatile int O;
-        volatile int LINE;
-
-        H = Hundle;
-        // while(1){
-        //     if(cnt1<1000){
-        //         handle(-28);
-        //     }
-
-        //     else if(cnt1<2000){
-        //         handle(28);
-        //     }
-
-        //     else{
-        //       cnt1=0;
-        //     }
-
-        // }
-
-        //if (abs(masugu) < 15 && encoder.getTotalCount() >= 500)     // 400
-            if (abs(masugu) < 15 && encoder.getTotalCount() >= 400) // 400
-            {
-
-                if (crossflag == 1)
-                { // クロスラインチェック
-                    pattern = 21;
-                    break;
-                }
-                if (rightflag == 1)
-                { // 右ハーフラインチェック
-                    pattern = 51;
-                    break;
-                }
-                if (leftflag == 1)
-                { // 左ハーフラインチェック
-                    pattern = 61;
-                    break;
-                }
-            }
-
-        L = 100 - speedsa * 13;
-        R = 100 - speedsa * 13;
-        if (L > 100)
-        {
-            L = 100;
-        }
-        if (R > 100)
-        {
-            R = 100;
-        }
-        // if (encoder.getCnt() >= 43)
-        // {
-        //     L = 85;
-        //     R = 85;
-        // }
-        if (encoder.getCnt() >= 47)
-        {
-            L = 60;
-            R = 60;
-            if (speedsa > 0)
-            {
-                L = -0;
-                R = -0;
-            }
-        }
-        // if (encoder.getCnt() >= 47)
-        // {
-        //     L = 30;
-        //     R = 30;
-        // }
-
-        if (abs(masugu) > 0)
-        {
-            HH = (masugu) * 40 / 100;
-            // HH = 0;
-            //   HH = masugu * ((abs(masugu) * 20) / 10 + (encoder.getCnt() * 10) / 10) / 120;
-        }
-        else if (abs(masugu) > 50)
-        {
-            HH = (masugu) * 69 / 100; // 69
-            if (encoder.getCnt() >= 42)
-            {
-               // HH = (masugu) * 73 / 100; // 69
-                HH = (masugu) * (encoder.getCnt() * 1.3 + 15) / 100;
-
-                // if(speedsa > 0){
-                //     L = 30;
-                //     R = 30;
-                // }
-
-               
-            }
-           
-        }
-        else if (abs(masugu) > 10)
-        {
-            HH = (masugu) * 68 / 100; // 69
-            if (encoder.getCnt() >= 42)
-            {
-               // HH = (masugu) * 73 / 100; // 69
-                HH = (masugu) * (encoder.getCnt() * 1.1 + 15) / 100;
-
-                // if(speedsa > 0){
-                //     L = 30;
-                //     R = 30;
-                // }
-
-               
-            }
-           
-        }
-        else
-        {
-            HH = 0;
-            HH = 0;
-        }
-
-        motor(L, R);
-        handle(HH);
-
-        if (abs(masugu) > 100)
-        {
-
-            pattern = 12;
-
+        if (check_crossline() == 1)
+        { // クロスラインチェック
+            pattern = 21;
             break;
         }
-        if (encoder.getCourseCount() >= 63000 * 3)
+        if (check_rightline() == 1)
+        { // 右ハーフラインチェック
+            pattern = 51;
+            break;
+        }
+        if (check_leftline() == 1)
+        { // 左ハーフラインチェック
+            pattern = 61;
+            break;
+        }
+        switch (sensor_inp(MASK3_3))
         {
-            pattern = 101;
+        case 0x00:
+            // センタ→まっすぐ
+            handle(0);
+            motor(100, 100);
+            break;
+
+        case 0x04:
+            // 微妙に左寄り→右へ微曲げ
+            handle(5);
+            motor(100, 100);
+            break;
+
+        case 0x06:
+            // 少し左寄り→右へ小曲げ
+            handle(10);
+            motor(80, 67);
+            break;
+
+        case 0x07:
+            // 中くらい左寄り→右へ中曲げ
+            handle(15);
+            motor(50, 38);
+            break;
+
+        case 0x03:
+            // 大きく左寄り→右へ大曲げ
+            handle(25);
+            motor(30, 19);
+            pattern = 12;
+            break;
+
+        case 0x20:
+            // 微妙に右寄り→左へ微曲げ
+            handle(-5);
+            motor(100, 100);
+            break;
+
+        case 0x60:
+            // 少し右寄り→左へ小曲げ
+            handle(-10);
+            motor(67, 80);
+            break;
+
+        case 0xe0:
+            // 中くらい右寄り→左へ中曲げ
+            handle(-15);
+            motor(38, 50);
+            break;
+
+        case 0xc0:
+            // 大きく右寄り→左へ大曲げ
+            handle(-25);
+            motor(19, 30);
+            pattern = 13;
+            break;
+
+        default:
+            break;
         }
         break;
 
     case 12:
-
-        L = 100 - speedsa * 13;
-        R = 100 - speedsa * 13;
-        if (L > 100)
-        {
-            L = 100;
-        }
-        if (R > 100)
-        {
-            R = 100;
-        }
-        if (encoder.getCnt() >= 40)
-        {
-            L = 80;
-            R = 80;
-        }
-        if (abs(masugu) < 10)
-        {
-            HH = (masugu) * 40 / 100;
-            // HH = 0;
-            //   HH = masugu * ((abs(masugu) * 20) / 10 + (encoder.getCnt() * 10) / 10) / 120;
-        }
-        else
-        {
-            HH = (Hundle) * 50 / 100;
-            if (encoder.getCnt() >= 43)
-            {
-                HH = (Hundle) * (encoder.getCnt() + 5) / 100;
-            }
-        }
-        // HH = H * ((abs(Hundle) * 10) / 10 + (encoder.getCnt() * 45) / 7) / 720;
-
-        // HH = H * ((abs(H) * 35) / 10 + (encoder.getCnt() * 10) / 10) / 120;
-
-        // if (encoder.getCnt() >= 35)
-        // {
-        //     L = 90;
-        //     R = 90;
-        // }
-        // if (encoder.getCnt() >= 40)
-        // {
-        //     L = 60;
-        //     R = 60;
-        // }
-        // if (encoder.getCnt() >= 45)
-        // {
-        //     L = 30;
-        //     R = 30;
-        // }
-
-        if (H < 0)
-        {
-            // H -= (6);
-            // R = 60;
-            // L = 60;
-        }
-
-        else
-        {
-            // H += (6);
-            // R = 60;
-            // L = 60;
-        }
-
-        if (abs(masugu) < 15 && abs(Hundle) < 15)
-        {
-
-            pattern = 11;
-
+        // 右へ大曲げの終わりのチェック
+        if (check_crossline() == 1)
+        { // 大曲げ中もクロスラインチェック
+            pattern = 21;
             break;
         }
+        if (check_rightline() == 1)
+        { // 右ハーフラインチェック
+            pattern = 51;
+            break;
+        }
+        if (check_leftline() == 1)
+        { // 左ハーフラインチェック
+            pattern = 61;
+            break;
+        }
+        if (sensor_inp(MASK3_3) == 0x06)
+        {
+            pattern = 11;
+        }
+        break;
 
-        motor(L, R);
-        handle(HH);
-
-        motor(L, R);
-        handle(HH);
+    case 13:
+        // 左へ大曲げの終わりのチェック
+        if (check_crossline() == 1)
+        { // 大曲げ中もクロスラインチェック
+            pattern = 21;
+            break;
+        }
+        if (check_rightline() == 1)
+        { // 右ハーフラインチェック
+            pattern = 51;
+            break;
+        }
+        if (check_leftline() == 1)
+        { // 左ハーフラインチェック
+            pattern = 61;
+            break;
+        }
+        if (sensor_inp(MASK3_3) == 0x60)
+        {
+            pattern = 11;
+        }
         break;
 
     case 21:
         // クロスライン検出時の処理
-        led_m(10, 1, 0, 1);
-        if (encoder.getCnt() >= 33)
-        {
-            L = -100;
-            R = -100;
-        }
-
-        else if (encoder.getCnt() >= 27)
-        {
-            L = 10;
-            R = 10;
-        }
-
-        else if (encoder.getCnt() >= 25)
-        {
-            L = 60;
-            R = 60;
-        }
-
-        else
-        {
-            L = 100;
-            R = 100;
-        }
-
-        motor(L, R);
-        Ccount = 1;
+        led_m(100, 1, 0, 0);
+        motor(0, 0);
         pattern = 22;
-        hazurereset=1;
-
-        encoder.clear();
-
-        handle(0);
-        // handle((ALL_hennsa[40] + 10) * 25 / 100);
-
-        // handle((ALL_hennsa[55] + 9) * 35 / 100);
-
-        // handle((ALL_hennsa[40] + 10) * 25 / 100);
-
-        // handle((ALL_hennsa[55] + 9) * 35 / 100);
-
+        cnt1 = 0;
         break;
 
     case 22:
         // クロスラインを読み飛ばす
-        led_m(50, 1, 0, 1);
-
-        // handle(ALL_hennsa[80] * 10 / 100);
-        // handle(ALL_hennsa[80] * 10 / 100);
-        handle(0);
-        // handle((ALL_hennsa[40] + 10) * 25 / 100);
-
-        // handle((ALL_hennsa[55] + 9) * 35 / 100);
-
-        // handle((ALL_hennsa[40] + 10) * 25 / 100);
-
-        // handle((ALL_hennsa[55] + 9) * 35 / 100);
-
-        if (encoder.getCnt() >= 33)
+        if (cnt1 >= 100)
         {
-            L = -100;
-            R = -100;
+            pattern = 23;
+            cnt1 = 0;
         }
-
-        else if (encoder.getCnt() >= 27)
-        {
-            L = 10;
-            R = 10;
-        }
-
-        else if (encoder.getCnt() >= 25)
-        {
-            L = 60;
-            R = 60;
-        }
-
-        else
-        {
-            L = 100;
-            R = 100;
-        }
-        motor(L, R);
-
-    //   if (crossflag == false && rightflag == false && leftflag == false && encoder.getTotalCount() > 200)
-            // if (encoder.getTotalCount() > 180)
-        if (crossflag == false && rightflag == false && leftflag == false && encoder.getTotalCount() > 300)
-            // if (encoder.getTotalCount() > 180)
-            {
-
-                pattern = 23;
-                hazurereset=1;
-
-                Ccount = 1;
-                encoder.clear();
-            }
-
         break;
 
     case 23:
         // クロスライン後のトレース、クランク検出
-        led_m(1, 1, 0, 1);
-        static int na;
-        static int ni;
-        // if(abs(ALL_hennsa[40])>=10){
-        //     pattern=11;
-        //     break;
-        // }
-
-        //  if (check_leftline() == 1 || senn() == 0x10)
-        if (leftflag == 1)
-        // if (check_leftline() == 1)
+        if (sensor_inp(MASK4_0) == 0xf0)
         {
             // 左クランクと判断→左クランククリア処理へ
-            led_m(100, 1, 0, 1);
-
-            handle(41); // 25
-
-            // motor(80, 0-encoder.getCnt()*2-encoder.getCnt()*2);
-            encoder.setvalue(0);
-            // motor(80, 0-encoder.getCnt()*2-encoder.getCnt()*2);
-
-            // motor(80 - encoder.getCnt()/2, 80);
-            motor(40, 80); // 60,80kami
-
+            led_m(100, 0, 1, 0);
+            handle(-38);
+            motor(10, 50);
             pattern = 31;
-            // pattern=32;
-            Ccount = 0;
-            encoder.clear();
+            cnt1 = 0;
             break;
         }
-
-        //    if (check_rightline() == 1 || senn() == 0x01)
-        else if (rightflag == 1)
-        // if (check_rightline() == 1)
+        if (sensor_inp(MASK0_4) == 0x0f)
         {
             // 右クランクと判断→右クランククリア処理へ
             led_m(100, 0, 0, 1);
-
-            handle(-41); // 25
-
-            encoder.setvalue(0);
-            // motor(80, 0-encoder.getCnt()*2-encoder.getCnt()*2);
-
-            // motor(80 - encoder.getCnt()/2, 80);
-            motor(80, 40); // 60,80kami
-
+            handle(38);
+            motor(50, 10);
             pattern = 41;
-            // pattern=32;
-            Ccount = 0;
-            encoder.clear();
+            cnt1 = 0;
             break;
         }
-        // H = hennsa(60);
-        // O = 1;
-        handle(ALL_hennsa[60] * 50 / 100);
-        //  handle(0);
-
-        if (encoder.getCnt() >= 33)
+        switch (sensor_inp(MASK3_3))
         {
-            L = -100;
-            R = -100;
+        case 0x00:
+            // センタ→まっすぐ
+            handle(0);
+            motor(40, 40);
+            break;
+        case 0x04:
+        case 0x06:
+        case 0x07:
+        case 0x03:
+            // 左寄り→右曲げ
+            handle(8);
+            motor(40, 35);
+            break;
+        case 0x20:
+        case 0x60:
+        case 0xe0:
+        case 0xc0:
+            // 右寄り→左曲げ
+            handle(-8);
+            motor(35, 40);
+            break;
         }
-
-        else if (encoder.getCnt() >= 27)
-        {
-            L = 10;
-            R = 10;
-        }
-
-        else if (encoder.getCnt() >= 25)
-        {
-            L = 60;
-            R = 60;
-        }
-
-        else
-        {
-            L = 100;
-            R = 100;
-        }
-
-        motor(L, R);
-
         break;
 
     case 31:
         // 左クランククリア処理　安定するまで少し待つ
-        led_m(100, 1, 1, 0);
-        // if (cnt1 >= 400 - encoder.getCnt() * 5)
-        // {
-        //     pattern = 42;
-        //     cnt1 = 0;
-        // }
-        // if (nolineflag == 0)
-        if (encoder.getTotalCount() >= 470)
-        // if (nolineflag == 0)
+        led_m(100, 0, 1, 0);
+        if (cnt1 >= 200)
         {
-            pattern = 11;
-            hazurereset=1;
-
-            //  cnt1 = 0;
-            pattern = 11;
-            //  cnt1 = 0;
+            pattern = 32;
+            cnt1 = 0;
         }
-        //   if (abs(hennsa(60)) <= 10 && cnt1 > 10)
-        // if (senn() == 0x10)
-        // {
-        //     pattern = 11;
-        //     Ccount = 0;
-        // }
         break;
 
     case 32:
         // 左クランククリア処理　曲げ終わりのチェック
-        // if (sensor_inp(MASK3_3) == 0x60)
-        // {
-        //     led_m(100, 0, 0, 0);
-        //     pattern = 11;
-        //     encoder.clear();
-        //     cnt1 = 0;
-        // }
-        // if (sensor_inp(MASK3_3) == 0x60)
-        // {
-        //     led_m(100, 0, 0, 0);
-        //     pattern = 11;
-        //     encoder.clear();
-        //     cnt1 = 0;
-        // }
-
-        // if (abs(Hundle) <= 20)
-        // {
-        //     led_m(100, 0, 0, 0);
-        //     pattern = 11;
-        //     encoder.clear();
-
-        //     cnt1 = 0;
-        // }
-        if (nolineflag == 0)
+        if (sensor_inp(MASK3_3) == 0x60)
         {
             led_m(100, 0, 0, 0);
             pattern = 11;
-            encoder.clear();
-
-            // cnt1 = 0;
-            // cnt1 = 0;
+            cnt1 = 0;
         }
 
-        // // 外側の白線を読んだら
-        // if (sensor_inp(MASK3_3) == 0x07)
-        // {
-        //     pattern = 33;
-        //     break;
-        // }
+        // 外側の白線を読んだら
+        if (sensor_inp(MASK3_3) == 0x07)
+        {
+            pattern = 33;
+            break;
+        }
 
         break;
 
@@ -1800,581 +1206,191 @@ void intTimer(void)
         {
             pattern = 32;
         }
-        if (abs(Hundle) <= 20)
-        {
-            led_m(100, 0, 0, 0);
-            pattern = 11;
-            // cnt1 = 0;
-            // cnt1 = 0;
-        }
         break;
 
     case 41:
         // 右クランククリア処理　安定するまで少し待つ
-        led_m(100, 0, 1, 1);
-        // if (cnt1 >= 400 - encoder.getCnt() * 5)
-        // {
-        //     pattern = 42;
-        //     cnt1 = 0;
-        // }
-        // if (nolineflag == 0)
-
-        if (encoder.getTotalCount() >= 470)
-        // if (nolineflag == 0)
-
+        led_m(100, 0, 0, 1);
+        if (cnt1 >= 200)
         {
-            pattern = 11;
-            hazurereset=1;
-
-            // cnt1 = 0;
-            pattern = 11;
-            // cnt1 = 0;
+            pattern = 42;
+            cnt1 = 0;
         }
-
-        // if (abs(Hundle) <= 20)
-        // {
-        //     led_m(100, 0, 0, 0);
-        //     pattern = 11;
-        //     cnt1 = 0;
-        // }
-        //   if (abs(hennsa(60)) <= 10 && cnt1 > 10)
-        // if (senn() == 0x10)
-        // {
-        //     pattern = 11;
-        //     Ccount = 0;
-        // }
         break;
 
     case 42:
         // 右クランククリア処理　曲げ終わりのチェック
-        // if (sensor_inp(MASK3_3) == 0x06)
-        // { // ○○○○　○●●○
-        //     led_m(100, 0, 0, 0);
-        //     pattern = 11;
-        //     encoder.clear();
-        // if (sensor_inp(MASK3_3) == 0x06)
-        // { // ○○○○　○●●○
-        //     led_m(100, 0, 0, 0);
-        //     pattern = 11;
-        //     encoder.clear();
-
-        //     cnt1 = 0;
-        // }
-        //     cnt1 = 0;
-        // }
-        // if (abs(Hundle) <= 20)
-        // {
-        //     led_m(100, 0, 0, 0);
-        //     pattern = 11;
-        //     encoder.clear();
-
-        //     cnt1 = 0;
-        // }
-        if (nolineflag == 0)
+        if (sensor_inp(MASK3_3) == 0x06)
         {
             led_m(100, 0, 0, 0);
             pattern = 11;
-            encoder.clear();
-
-            // cnt1 = 0;
-            // cnt1 = 0;
+            cnt1 = 0;
         }
 
         // 外側の白線を読んだら
-        // if (sensor_inp(MASK3_3) == 0xe0)
-        // { // ●●○○ ○○○○
-        //     pattern = 43;
-        //     break;
-        // }
-        // break;
+        if (sensor_inp(MASK3_3) == 0xe0)
+        {
+            pattern = 43;
+            break;
+        }
+        break;
 
     case 43:
         // 右クランククリア処理　外側の白線と見間違わないようにする
-        // b = sensor_inp(MASK3_3);
-        // if (b == 0xc1 || b == 0x81 || b == 0x83)
-        // {
-        //     pattern = 42;
-        // }
-        if (abs(Hundle) <= 20)
+        b = sensor_inp(MASK3_3);
+        if (b == 0xc1 || b == 0x81 || b == 0x83)
         {
-            led_m(100, 0, 0, 0);
-            pattern = 11;
-            // cnt1 = 0;
-            // cnt1 = 0;
+            pattern = 42;
         }
         break;
 
     case 51:
         // 右ハーフライン検出時の処理
         led_m(100, 0, 1, 0);
-        // handle(ALL_hennsa[100] * 30 / 100);
-        // handle(0);
-        handle((ALL_hennsa[55] - 9) * 35 / 100);
-        // handle(0);
-
-        // if (encoder.getCnt() < 28)
-        // {
-        //     L = 60;
-        //     R = 60;
-        // }
-        // if (encoder.getCnt() < 28)
-        // {
-        //     L = 60;
-        //     R = 60;
-        // }
-
-        // else if (encoder.getCnt() < 32)
-        // {
-        //     L = 50;
-        //     R = 50;
-        // }
-        // else if (encoder.getCnt() < 32)
-        // {
-        //     L = 50;
-        //     R = 50;
-        // }
-
-        // //   else if (encoder.getCnt() < 40)
-        // else
-        // {
-        L = 60;
-        R = 60;
-        // }
-        // //   else if (encoder.getCnt() < 40)
-        // else
-        // {
-
-        // }
-        motor(L, R);
+        handle(0);
+        motor(0, 0);
         pattern = 52;
-        // cnt1 = 0;
-        // cnt1 = 0;
-        encoder.clear();
-        // handle((ALL_hennsa[55] + 9 - 9) * 35 / 100);
-
-        // handle((ALL_hennsa[55] + 9 - 9) * 35 / 100);
-
-        // if (check_leftline() == 1 || check_crossline() == 1)
-        if (leftflag == 1 || crossflag == 1)
-        {
-            pattern = 21;
-            break;
-        }
-
+        cnt1 = 0;
         break;
 
     case 52:
-
         // 右ハーフラインを読み飛ばす
-        if (rightflag == false && encoder.getTotalCount() > 200)
+        if (cnt1 >= 100)
         {
             pattern = 53;
-            // cnt1 = 0;
-            // cnt1 = 0;
-            encoder.clear();
+            cnt1 = 0;
         }
-        // if (check_leftline() == 1 || check_crossline() == 1)
-        if (leftflag == 1 || crossflag == 1)
-
+        if (check_crossline() == 1)
         {
             pattern = 21;
             break;
         }
-        /// handle(ALL_hennsa[100] * 30 / 100);
-        //        handle(0);
-
-        // handle((ALL_hennsa[55] + 9 - 9) * 35 / 100);
-
-        /// handle(ALL_hennsa[100] * 30 / 100);
-        //        handle(0);
-        handle((H - 9) * 35 / 100);
-
-        // handle((ALL_hennsa[55] + 9 - 9) * 35 / 100);
-
-        // handle(ALL_hennsa[80] * 10 / 100);
-        //  handle(ALL_hennsa[100] * 10 / 100);
-        //  handle((stahen + 2) / 2.5);
-        //  handle(ALL_hennsa[100] * 10 / 100);
-        //  handle((stahen + 2) / 2.5);
-
-        // if (encoder.getCnt() < 32)
-        // {
-        //     L = 80;
-        //     R = 80;
-        // }
-        // if (encoder.getCnt() < 32)
-        // {
-        //     L = 80;
-        //     R = 80;
-        // }
-
-        // else if (encoder.getCnt() < 35)
-        // {
-        //     L = 50;
-        //     R = 50;
-        // }
-        // else if (encoder.getCnt() < 35)
-        // {
-        //     L = 50;
-        //     R = 50;
-        // }
-
-        // }
-        // //   else if (encoder.getCnt() < 40)
-        // else
-        // {
-        L = 60;
-        R = 60;
-        // }
-        motor(L, R);
-
         break;
 
     case 53:
         // 右ハーフライン後のトレース、レーンチェンジ
-
-        // if (sensor_inp(0x3c) == 0x00)
-        //  if (getImage(80, 60) <= 200)
-        if (nolineflag == 1)
+        if (sensor_inp(MASK4_4) == 0x00)
         {
-            led_m(50, 0, 0, 1);
-
-            // if (shikiichi_henkan2(60, 180, 8, 70, 72, 74, 78, 80, 82, 84, 86) == 0x00)
-            // {
-            handle(-10);
-            motor(80, 100);
+            handle(15);
+            motor(40, 31);
             pattern = 54;
-            encoder.clear();
-            cnt1 = 0;
             cnt1 = 0;
             break;
         }
-        // handle(Hundle * 20 / 100);
-        handle((H) * 35 / 100);
-        if (encoder.getCnt() > 25)
+        switch (sensor_inp(MASK3_3))
         {
-            L = -30;
-            R = -30;
+        case 0x00:
+            // センタ→まっすぐ
+            handle(0);
+            motor(40, 40);
+            break;
+        case 0x04:
+        case 0x06:
+        case 0x07:
+        case 0x03:
+            // 左寄り→右曲げ
+            handle(8);
+            motor(40, 35);
+            break;
+        case 0x20:
+        case 0x60:
+        case 0xe0:
+        case 0xc0:
+            // 右寄り→左曲げ
+            handle(-8);
+            motor(35, 40);
+            break;
+        default:
+            break;
         }
-
-        else
-        {
-            L = 60;
-            R = 60;
-        }
-        L = 60;
-        R = 60;
-        // }
-        motor(L, R);
-
         break;
 
     case 54:
-
         // 右レーンチェンジ終了のチェック
-        b = sensor_inp(0x3c);
-        //
-        led_m(50, 1, 0, 0);
-
-        // if (getImage(80, 80) >= 200)
-        // if (b > 1 && encoder.getTotalCount() >= 300)
-        if (encoder.getTotalCount() >= 250)
-
-        {
-            led_m(100, 0, 0, 0);
-            pattern = 55;
-            // cnt1 = 0;
-            encoder.clear();
-        }
-        // if (abs(hennsa(60)) <= 20)
-        // {
-        //   led_m(100, 0, 0, 0);
-        //   pattern = 11;
-        //   cnt1 = 0;
-        // }
-        break;
-    case 55:
-
-        // 右レーンチェンジ終了のチェック
-        b = sensor_inp(0x3c);
-        //
-        led_m(50, 1, 0, 0);
-        handle((encoder.getCnt() / 8));
-        //
-
-        motor(100, 100);
-
-        // if (getImage(80, 80) >= 200)
-        // if (b > 1 && encoder.getTotalCount() >= 300)
-        if (nolineflag == 0)
-
+        b = sensor_inp(MASK4_4);
+        if (b == 0x3c || b == 0x1c || b == 0x38)
         {
             led_m(100, 0, 0, 0);
             pattern = 11;
-            // cnt1 = 0;
-            // cnt1 = 0;
-            encoder.clear();
+            cnt1 = 0;
         }
-        // if (abs(hennsa(60)) <= 20)
-        // {
-        //   led_m(100, 0, 0, 0);
-        //   pattern = 11;
-        //   cnt1 = 0;
-        // }
         break;
 
     case 61:
         // 左ハーフライン検出時の処理
-
-        led_m(100, 0, 1, 0);
-        // handle(ALL_hennsa[100] * 30 / 100);
-        //        handle(0);
-        handle((H + 9) * (35) / 100);
-        //        handle(0);
-
-        // if (encoder.getCnt() < 28)
-        // {
-        //     L = 80;
-        //     R = 80;
-        // }
-        // if (encoder.getCnt() < 28)
-        // {
-        //     L = 80;
-        //     R = 80;
-        // }
-
-        // else if (encoder.getCnt() < 32)
-        // {
-        //     L = 60;
-        //     R = 60;
-        // }
-
-        // //   else if (encoder.getCnt() < 40)
-        // else
-        // {
-
-        if (encoder.getCnt() >= 40)
-        {
-            L = 0;
-            R = 0;
-        }
-
-        else if (encoder.getCnt() >= 36)
-        {
-            L = 10;
-            R = 10;
-        }
-
-        else if (encoder.getCnt() >= 33)
-        {
-            L = 80;
-            R = 80;
-        }
-
-        else
-        {
-            L = 100;
-            R = 100;
-        }
-        // }
-
-        motor(L, R);
+        led_m(100, 0, 0, 1);
+        handle(0);
+        motor(0, 0);
         pattern = 62;
-        hazurereset=1;
-
-        // cnt1 = 0;
-        // cnt1 = 0;
-        encoder.clear();
-        // handle((ALL_hennsa[55] + 9 + 9) * (35) / 100);
-
-        // handle((ALL_hennsa[55] + 9 + 9) * (35) / 100);
-
-        // if (check_leftline() == 1 || check_crossline() == 1)
-        if (rightflag == 1 || crossflag == 1)
-        {
-            pattern = 21;
-            break;
-        }
-
+        cnt1 = 0;
         break;
 
     case 62:
         // 左ハーフラインを読み飛ばす
-
-        if (leftflag == false && encoder.getTotalCount() > 200)
+        if (cnt1 >= 100)
         {
             pattern = 63;
-            hazurereset=1;
-
-            // cnt1 = 0;
-            // cnt1 = 0;
-            encoder.clear();
+            cnt1 = 0;
         }
-        // if (check_leftline() == 1 || check_crossline() == 1)
-        if (rightflag == 1 || crossflag == 1)
-
+        if (check_crossline() == 1)
         {
             pattern = 21;
             break;
         }
-        // handle(ALL_hennsa[100] * 30 / 100);
-        // handle(0);
-        handle((H + 9) * (35) / 100);
-
-        if (encoder.getCnt() >= 40)
-        {
-            L = 0;
-            R = 0;
-        }
-
-        else if (encoder.getCnt() >= 36)
-        {
-            L = 10;
-            R = 10;
-        }
-
-        else if (encoder.getCnt() >= 33)
-        {
-            L = 80;
-            R = 80;
-        }
-
-        else
-        {
-            L = 100;
-            R = 100;
-        }
-        motor(L, R);
-
         break;
 
-  case 63:
-
+    case 63:
         // 左ハーフライン後のトレース、レーンチェンジ
-        // if (sensor_inp(0x3c) == 0x00)
-        // if (getImage(80, 60) <= 200)
-        if (nolineflag == 1)
+        if (sensor_inp(MASK4_4) == 0x00)
         {
-            led_m(50, 0, 0, 1);
-
-            // if (shikiichi_henkan2(60, 180, 8, 70, 72, 74, 78, 80, 82, 84, 86) == 0x00)
-            // {
-            handle(0);
-            motor(60, 60);
-            pattern = 640;
-            encoder.clear();
-            cnt1 = 0;
+            handle(-15);
+            motor(31, 40);
+            pattern = 64;
             cnt1 = 0;
             break;
         }
-        handle((H) * (35) / 100);
-        // handle(ALL_hennsa[55] * 30 / 100);
-        if (encoder.getCnt() >= 30)
+        switch (sensor_inp(MASK3_3))
         {
-            L = -100;
-            R = -100;
-        }
-
-        else if (encoder.getCnt() >= 27)
-        {
-            L = 10;
-            R = 10;
-        }
-
-        else if (encoder.getCnt() >= 25)
-        {
-            L = 60;
-            R = 60;
-        }
-
-        else
-        {
-            L = 100;
-            R = 100;
-        }
-
-        motor(L, R);
-
-        break;
-
-    case 640:
-
-        if (encoder.getTotalCount() > 100)
-        {
-             handle(30);
-            motor(30, 50);
-            pattern = 64;
+        case 0x00:
+            // センタ→まっすぐ
+            handle(0);
+            motor(40, 40);
+            break;
+        case 0x04:
+        case 0x06:
+        case 0x07:
+        case 0x03:
+            // 左寄り→右曲げ
+            handle(8);
+            motor(40, 35);
+            break;
+        case 0x20:
+        case 0x60:
+        case 0xe0:
+        case 0xc0:
+            // 右寄り→左曲げ
+            handle(-8);
+            motor(35, 40);
+            break;
+        default:
             break;
         }
         break;
 
     case 64:
-        b = sensor_inp(0x3c);
-        //
-        led_m(50, 1, 0, 0);
-
-        // if (getImage(80, 80) >= 200)
-        // if (b > 1 && encoder.getTotalCount() >= 300)
-        // if (encoder.getTotalCount() >= 300)
-        if (/*encoder.getTotalCount() >= 400*/ nolineflag == 0)
-
-        {
-            led_m(100, 0, 0, 0);
-            pattern = 65;
-            // cnt1 = 0;
-            hazurereset=1;
-            encoder.clear();
-        }
-        break;
-
-    case 65:
-        b = sensor_inp(0x3c);
-        //
-        led_m(50, 1, 0, 0);
-        handle(0);
-        //
-
-        motor(40, 40);
-        // if (getImage(80, 80) >= 200)
-        // if (b > 1 && encoder.getTotalCount() >= 300)
-        if (encoder.getTotalCount() >= 10)
-
-        {
-            led_m(100, 0, 0, 0);
-            pattern = 67;
-            // cnt1 = 0;
-            encoder.clear();
-        }
-        break;
-
-    case 67:
-        b = sensor_inp(0x3c);
-        //
-        led_m(50, 1, 0, 0);
-        handle(-20);
-        //
-
-        motor(40, 20);
-        // if (getImage(80, 80) >= 200)
-        // if (b > 1 && encoder.getTotalCount() >= 300)
-        if (encoder.getTotalCount() >= 300)
-
+        // 左レーンチェンジ終了のチェック
+        b = sensor_inp(MASK4_4);
+        if (b == 0x38 || b == 0x1c || b == 0x3c)
         {
             led_m(100, 0, 0, 0);
             pattern = 11;
-            // cnt1 = 0;
-            hazurereset=1;
-
-            encoder.setvalue(-400);
+            cnt1 = 0;
         }
         break;
 
     case 101:
         // 終了　ログ保存中など
-        led_m(100, 0, 1, 1);
-        handle((stahen + 6) / 2.5);
-        endflag = true;
-        // interrput.detach();
+        led_m(20, 1, 1, 1);
         motor(0, 0);
         break;
 
@@ -2463,25 +1479,11 @@ unsigned char pushsw_get(void)
 void motor(int accele_l, int accele_r)
 {
     int sw_data;
-    /*
-    sw_data = dipsw_get() + 5;
-    accele_l = ( accele_l * sw_data ) / 20;
-    accele_r = ( accele_r * sw_data ) / 20;
-    */
 
     msd_l = accele_l;
     msd_r = accele_r;
 
     // Left Motor Control
-
-    // if (accele_l == 100)
-    // {
-    //     // forward
-    //     Left_motor_signal = 0;
-    //     MTU2TGRC_4 = (long)(MOTOR_PWM_CYCLE);
-    // }
-
-    // else
     if (accele_l >= 0)
     {
         // forward
@@ -2496,25 +1498,15 @@ void motor(int accele_l, int accele_r)
     }
 
     // Right Motor Control
-    // if (accele_r == 100)
-    // {
-    //     // forward
-    //     Right_motor_signal = 0;
-    //     MTU2TGRD_4 = (long)(MOTOR_PWM_CYCLE + 2);
-    // }
-
-    // else
     if (accele_r >= 0)
     {
         // forward
-        Right_motor_signal = 1;
         Right_motor_signal = 1;
         MTU2TGRD_4 = (long)(MOTOR_PWM_CYCLE - 1) * accele_r / 100;
     }
     else
     {
         // reverse
-        Right_motor_signal = 0;
         Right_motor_signal = 0;
         MTU2TGRD_4 = (long)(MOTOR_PWM_CYCLE - 1) * (-accele_r) / 100;
     }
@@ -2526,7 +1518,6 @@ void motor(int accele_l, int accele_r)
 void handle(int angle)
 {
     msd_handle = -angle;
-    msd_handle = -angle;
     // When the servo move from left to right in reverse, replace "-" with "+"
     MTU2TGRD_0 = SERVO_CENTER - angle * HANDLE_STEP;
 }
@@ -2537,7 +1528,10 @@ void handle(int angle)
 //------------------------------------------------------------------//
 // Dipsw get Function
 //------------------------------------------------------------------//
-unsigned char dipsw_get(void) { return (dipsw.read() & 0x0f); }
+unsigned char dipsw_get(void)
+{
+    return (dipsw.read() & 0x0f);
+}
 
 //------------------------------------------------------------------//
 // sensor Function
@@ -2545,11 +1539,6 @@ unsigned char dipsw_get(void) { return (dipsw.read() & 0x0f); }
 unsigned char sensor_inp(unsigned char mask)
 {
     return (sensor_bin & mask); // 中
-}
-
-unsigned char sensor_inp2(unsigned char mask)
-{
-    return (sensor_bin2 & mask); // 中
 }
 
 ///*********************************************************************
@@ -2692,12 +1681,6 @@ int check_crossline(void)
     {
         ret = 1;
     }
-
-    if ((getImage(114, 60) >= 230 || getImage(114, 62) >= 230 | getImage(114, 64) >= 230) && (getImage(43, 60) >= 230 || getImage(43, 62) >= 230 || getImage(43, 64) >= 230))
-    {
-        ret = 1;
-    }
-
     return ret;
 }
 
@@ -2712,18 +1695,10 @@ int check_rightline(void)
 
     ret = 0;
     b = sensor_inp(MASK4_4);
-    if (b == 0x0f || b == 0x1f || b == 0x3f || b == 0x0e || b == 0x1e || b == 0x3e)
+    if (b == 0x0f || b == 0x1f || b == 0x3f || b == 0x7f)
     {
         ret = 1;
     }
-    // if (getImage(114, 60) >= 200 || getImage(114, 62) >= 200 | getImage(114, 64) >= 200 || getImage(114, 58) >= 200)
-    // {
-    //     ret = 1;
-    // }
-    // if (getImage(114, 60) >= 200 || getImage(114, 62) >= 200 | getImage(114, 64) >= 200 || getImage(114, 58) >= 200)
-    // {
-    //     ret = 1;
-    // }
     return ret;
 }
 
@@ -2738,18 +1713,10 @@ int check_leftline(void)
 
     ret = 0;
     b = sensor_inp(MASK4_4);
-    if (b == 0xf0 || b == 0xf8 || b == 0xfc || b == 0x70 || b == 0x78 || b == 0x7c)
+    if (b == 0xf0 || b == 0xf8 || b == 0xfc || b == 0xfe)
     {
         ret = 1;
     }
-    // if (getImage(43, 60) >= 200 || getImage(43, 62) >= 200 || getImage(43, 64) >= 200 || getImage(43, 58) >= 200)
-    // {
-    //     ret = 1;
-    // }
-    // if (getImage(43, 60) >= 200 || getImage(43, 62) >= 200 || getImage(43, 64) >= 200 || getImage(43, 58) >= 200)
-    // {
-    //     ret = 1;
-    // }
     return ret;
 }
 
@@ -2766,37 +1733,14 @@ unsigned char shikiichi_henkan(int gyou, int s, int sa)
     unsigned char ret;
 
     d[7] = getImage(31, gyou);
-
     d[6] = getImage(43, gyou);
-
     d[5] = getImage(54, gyou);
-
     d[4] = getImage(71, gyou);
-
     d[3] = getImage(88, gyou);
-
     d[2] = getImage(105, gyou);
-
     d[1] = getImage(116, gyou);
-
     d[0] = getImage(128, gyou);
 
-    // d[7] = getImage(20, gyou);
-
-    // d[6] = getImage(23, gyou);
-
-    // d[5] = getImage(26, gyou);
-
-    // d[4] = getImage(29, gyou);
-
-    // d[3] = getImage(120, gyou);
-
-    // d[2] = getImage(123, gyou);
-
-    // d[1] = getImage(126, gyou);
-
-    // d[0] = getImage(129, gyou);
-
     min = max = d[0];
     for (i = 1; i < 8; i++)
     {
@@ -2809,23 +1753,6 @@ unsigned char shikiichi_henkan(int gyou, int s, int sa)
             min = d[i]; // 8個のうち、最小を見つける
         }
     }
-
-    //
-    // min = max = data[0];
-    // for (i = 30; i < 150; i++)
-    // {
-    //     if (max <= data[i])
-    //     {
-    //         max = d[i]; // 8個のうち、最大を見つける
-    //         h_point = i;
-    //     }
-    //     if (min >= d[i])
-    //     {
-    //         min = d[i]; // 8個のうち、最小を見つける
-    //         l_point = i;
-    //     }
-    // }
-    // center = h_point - l_point;
 
     // 隣同士の差の絶対値
     sa_7_6 = abs(d[7] - d[6]);
@@ -2841,217 +1768,10 @@ unsigned char shikiichi_henkan(int gyou, int s, int sa)
         // 最大値がs以上なら、sをしきい値とする
         shiki = s;
     }
-    else if (sa_7_6 >= sa || sa_6_5 >= sa || sa_5_4 >= sa || sa_4_3 >= sa ||
-             sa_3_2 >= sa || sa_2_1 >= sa || sa_1_0 >= sa)
+    else if (sa_7_6 >= sa || sa_6_5 >= sa || sa_5_4 >= sa ||
+             sa_4_3 >= sa || sa_3_2 >= sa || sa_2_1 >= sa || sa_1_0 >= sa)
     {
-        // 隣同士の差が１つでも「差」以上なら、８点の（最大値－最小値）×0.7 +
-        // 最小値　をしきい値とする
-        shiki = (max - min) * 7 / 10 + min;
-    }
-    else
-    {
-        // 当てはまらなければ、しきい値を256とする、すなわちすべて0となる
-        shiki = 256;
-    }
-    if (max < 100)
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            d[i] = 0;
-        }
-    }
-
-    // d[7]～d[0]をbit7～bit0に割り当てる
-    ret = 0;
-    for (i = 7; i >= 0; i--)
-    {
-        ret <<= 1;
-        ret |= (d[i] >= shiki ? 1 : 0);
-    }
-
-    return ret;
-}
-
-unsigned char shikiichi_henkanline(int gyou, int s, int sa)
-{
-    int max, min, i, shiki;
-    int d[8];
-    int sa_7_6, sa_6_5, sa_5_4, sa_4_3, sa_3_2, sa_2_1, sa_1_0;
-    unsigned char ret;
-
-    // d[7] = getImage(31, gyou);
-
-    // d[6] = getImage(43, gyou);
-
-    // d[5] = getImage(54, gyou);
-
-    // d[4] = getImage(71, gyou);
-
-    // d[3] = getImage(88, gyou);
-
-    // d[2] = getImage(105, gyou);
-
-    // d[1] = getImage(116, gyou);
-
-    // d[0] = getImage(128, gyou);
-
-    d[7] = getImage(20, gyou);
-
-    d[6] = getImage(23, gyou);
-
-    d[5] = getImage(26, gyou);
-
-    d[4] = getImage(29, gyou);
-
-    d[3] = getImage(120, gyou);
-
-    d[2] = getImage(123, gyou);
-
-    d[1] = getImage(126, gyou);
-
-    d[0] = getImage(129, gyou);
-
-    min = max = d[0];
-    for (i = 1; i < 8; i++)
-    {
-        if (max <= d[i])
-        {
-            max = d[i]; // 8個のうち、最大を見つける
-        }
-        if (min >= d[i])
-        {
-            min = d[i]; // 8個のうち、最小を見つける
-        }
-    }
-
-    //
-    // min = max = data[0];
-    // for (i = 30; i < 150; i++)
-    // {
-    //     if (max <= data[i])
-    //     {
-    //         max = d[i]; // 8個のうち、最大を見つける
-    //         h_point = i;
-    //     }
-    //     if (min >= d[i])
-    //     {
-    //         min = d[i]; // 8個のうち、最小を見つける
-    //         l_point = i;
-    //     }
-    // }
-    // center = h_point - l_point;
-
-    // 隣同士の差の絶対値
-    sa_7_6 = abs(d[7] - d[6]);
-    sa_6_5 = abs(d[6] - d[5]);
-    sa_5_4 = abs(d[5] - d[4]);
-    sa_4_3 = abs(d[4] - d[3]);
-    sa_3_2 = abs(d[3] - d[2]);
-    sa_2_1 = abs(d[2] - d[1]);
-    sa_1_0 = abs(d[1] - d[0]);
-
-    if (max >= s)
-    {
-        // 最大値がs以上なら、sをしきい値とする
-        shiki = s;
-    }
-    else if (sa_7_6 >= sa || sa_6_5 >= sa || sa_5_4 >= sa || sa_4_3 >= sa ||
-             sa_3_2 >= sa || sa_2_1 >= sa || sa_1_0 >= sa)
-    {
-        // 隣同士の差が１つでも「差」以上なら、８点の（最大値－最小値）×0.7 +
-        // 最小値　をしきい値とする
-        shiki = (max - min) * 7 / 10 + min;
-    }
-    else
-    {
-        // 当てはまらなければ、しきい値を256とする、すなわちすべて0となる
-        shiki = 256;
-    }
-    if (max < 100)
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            d[i] = 0;
-        }
-    }
-
-    // d[7]～d[0]をbit7～bit0に割り当てる
-    ret = 0;
-    for (i = 7; i >= 0; i--)
-    {
-        ret <<= 1;
-        ret |= (d[i] >= shiki ? 1 : 0);
-    }
-
-    return ret;
-}
-
-unsigned char shikiichi_henkan2(int gyou, int s, int sa, int B1, int B2, int B3,
-                                int B4, int B5, int B6, int B7, int B8)
-{
-    int max, min, i, shiki;
-    int d[8];
-    int sa_7_6, sa_6_5, sa_5_4, sa_4_3, sa_3_2, sa_2_1, sa_1_0;
-    unsigned char ret;
-
-    d[7] = getImage(B1, gyou);
-    d[6] = getImage(B2, gyou);
-    d[5] = getImage(B3, gyou);
-    d[4] = getImage(B4, gyou);
-    d[3] = getImage(B5, gyou);
-    d[2] = getImage(B6, gyou);
-    d[1] = getImage(B7, gyou);
-    d[0] = getImage(B8, gyou);
-
-    min = max = d[0];
-    for (i = 1; i < 8; i++)
-    {
-        if (max <= d[i])
-        {
-            max = d[i]; // 8個のうち、最大を見つける
-        }
-        if (min >= d[i])
-        {
-            min = d[i]; // 8個のうち、最小を見つける
-        }
-    }
-
-    //
-    // min = max = data[0];
-    // for (i = 30; i < 150; i++)
-    // {
-    //     if (max <= data[i])
-    //     {
-    //         max = d[i]; // 8個のうち、最大を見つける
-    //         h_point = i;
-    //     }
-    //     if (min >= d[i])
-    //     {
-    //         min = d[i]; // 8個のうち、最小を見つける
-    //         l_point = i;
-    //     }
-    // }
-    // center = h_point - l_point;
-
-    // 隣同士の差の絶対値
-    sa_7_6 = abs(d[7] - d[6]);
-    sa_6_5 = abs(d[6] - d[5]);
-    sa_5_4 = abs(d[5] - d[4]);
-    sa_4_3 = abs(d[4] - d[3]);
-    sa_3_2 = abs(d[3] - d[2]);
-    sa_2_1 = abs(d[2] - d[1]);
-    sa_1_0 = abs(d[1] - d[0]);
-
-    if (max >= s)
-    {
-        // 最大値がs以上なら、sをしきい値とする
-        shiki = s;
-    }
-    else if (sa_7_6 >= sa || sa_6_5 >= sa || sa_5_4 >= sa || sa_4_3 >= sa ||
-             sa_3_2 >= sa || sa_2_1 >= sa || sa_1_0 >= sa)
-    {
-        // 隣同士の差が１つでも「差」以上なら、８点の（最大値－最小値）×0.7 +
-        // 最小値　をしきい値とする
+        // 隣同士の差が１つでも「差」以上なら、８点の（最大値－最小値）×0.7 + 最小値　をしきい値とする
         shiki = (max - min) * 7 / 10 + min;
     }
     else
@@ -3070,699 +1790,16 @@ unsigned char shikiichi_henkan2(int gyou, int s, int sa, int B1, int B2, int B3,
 
     return ret;
 }
-void hennsa(void)
-{
-    // signed int hensa, hensa2;
 
-    // static int atai[120][160];
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     for (int v = 0; v < 160; v++)
-    //     {
-    //         atai[i][v] = 0;
-    //     }
-    // }
-    // static int gyoumax[120];
-
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     gyoumax[i] = 0;
-    // }
-
-    // static int sa[120][160];
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     for (int v = 0; v < 160; v++)
-    //     {
-    //         sa[i][v] = 0;
-    //     }
-    // }
-    // static int bibunn[120][160];
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     for (int v = 0; v < 160; v++)
-    //     {
-    //         bibunn[i][v] = 0;
-    //     }
-    // }
-    // static int max[120];
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     max[i] = 0;
-    // }
-    // static int ans[120];
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     ans[i] = 0;
-    // }
-    // static int gyou[120][160];
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     for (int v = 0; v < 160; v++)
-    //     {
-    //         gyou[i][v] = 0;
-    //     }
-    // }
-    // static int countgyou[120];
-    // for (int i = 0; i < 120; i++)
-    // {
-    //     countgyou[i] = 0;
-    // }
-
-    // static int ALLhennsamae[120];
-
-    volatile signed int min, max120, max60, hensa, H, maxgyou, mingyou, sotosenngyou_R;
-
-    volatile static signed int Sa = 0;
-    volatile static signed int sotosenngyou_L2 = 40;
-    volatile static signed int sotosenngyou_L = 40;
-    volatile static signed int sotosenn_L = 255;
-    volatile static signed int sotosenn_R = 255;
-    volatile static signed int hensa2 = 0;
-    volatile signed int count120 = 0;
-    volatile signed int count60 = 0;
-    volatile signed int unnti = 160;
-    volatile signed int unnticount[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        unnticount[i] = 0;
-    }
-    volatile static bool saisyoflag = false;
-    //  printf("aaaa\n");
-    volatile signed int atai[320][320];
-    for (int i = 0; i <= 319; i++)
-    {
-        for (int i2 = 0; i2 <= 319; i2++)
-        {
-            atai[i][i2] = 0;
-        }
-    }
-    volatile signed int gyoumax[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        gyoumax[i] = 160;
-    }
-    volatile signed int gyoumaxsei[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        gyoumaxsei[i] = 160;
-    }
-
-    volatile signed int sa[320][320];
-    for (int i = 0; i <= 319; i++)
-    {
-        for (int i2 = 0; i2 <= 319; i2++)
-        {
-            sa[i][i2] = 0;
-        }
-    }
-    volatile signed int sasei[320][320];
-    for (int i = 0; i <= 319; i++)
-    {
-        for (int i2 = 0; i2 <= 319; i2++)
-        {
-            sasei[i][i2] = 0;
-        }
-    }
-    volatile signed int bibunn[320][320];
-    for (int i = 0; i <= 319; i++)
-    {
-        for (int i2 = 0; i2 <= 319; i2++)
-        {
-            bibunn[i][i2] = 0;
-        }
-    }
-
-    volatile signed int max[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        max[i] = 0;
-    }
-
-    volatile static signed int maxmae[320];
-    if (saisyoflag == false)
-    {
-        for (int i = 0; i <= 319; i++)
-        {
-            maxmae[i] = 250;
-            saisyoflag = true;
-        }
-    }
-
-    volatile signed int ans[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        ans[i] = 0;
-    }
-    volatile signed int anssei[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        anssei[i] = 0;
-    }
-
-    volatile signed int gyou[320][320];
-    for (int i = 0; i <= 319; i++)
-    {
-        for (int i2 = 0; i2 <= 319; i2++)
-        {
-            gyou[i][i2] = 0;
-        }
-    }
-
-    volatile signed int gyousei[320][320];
-    for (int i = 0; i <= 319; i++)
-    {
-        for (int i2 = 0; i2 <= 319; i2++)
-        {
-            gyousei[i][i2] = 0;
-        }
-    }
-    volatile signed int countgyou[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        countgyou[i] = 0;
-    }
-    volatile signed int countgyousei[320];
-    for (int i = 0; i <= 319; i++)
-    {
-        countgyousei[i] = 0;
-    }
-
-    volatile static signed int ALLhennsamae[320];
-    volatile static signed int ALLhennsamae_sei[320];
-    volatile static signed int ALLhennsamae_hu[320];
-
-    min = 255;
-    max120 = 0;
-    max60 = 0;
-    sotosenn_L = 255;
-    sotosenn_R = 255;
-
-    // あたいいれる
-
-    for (int i = 0; i < 120; i++)
-    {
-        for (int i2 = 0; i2 < 160; i2++)
-        {
-            atai[i][i2] = getImage(i2, i);
-        }
-    }
-
-    // さいだいみつける
-    for (int i2 = 0; i2 < 160; i2++)
-    {
-
-        maxmae[i2] = max[i2];
-    }
-
-    for (int i = 0; i < 120; i++)
-    {
-        for (int i2 = 0; i2 < 160; i2++)
-        {
-            if (max[i] < atai[i][i2])
-            {
-                max[i] = atai[i][i2];
-            }
-        }
-    }
-
-    // ０か２００か８わり切り捨て
-
-    for (int i = 0; i < 120; i++)
-    {
-        for (int i2 = 0; i2 < 160; i2++)
-        {
-            signed int v;
-            v = atai[i][i2];
-            // if (max[i] < 220)
-            // {
-            //     encoder.clearkura();
-            // }
-            // if (maxmae[i] - max[i] > -60)
-            // {
-            if (v > max[i] * 8 / 10)
-            {
-                v = 255;
-            }
-
-            // }
-
-            // else
-            // {
-            //     if (v > 210)
-            //     {
-            //         v = 0;
-            //     }
-            //     else
-            //     {
-            //         if (v > maxmae[i] * 7 / 10)
-            //         {
-            //             v = 200;
-            //         }
-            //         else
-            //         {
-            //             v = 0;
-            //         }
-            //     }
-            // }
-
-            atai[i][i2] = v;
-        }
-    }
-
-    // びぶん
-
-    for (int i = 0; i < 120; i++)
-    {
-        for (int i2 = 0; i2 < 159; i2++)
-        {
-            bibunn[i][i2] = (atai[i][i2] - atai[i][i2 + 1]);
-            bibunnG[i][i2] = (atai[i][i2] - atai[i][i2 + 1]);
-        }
-    }
-    for (int i = 0; i < 120; i++)
-    {
-        // for (int i2 = 0; i2 < 159; i2++)
-        // {
-        //     bibunnG[i][i2] = bibunn[i][i2];
-        // }
-    }
-
-    // さいしょうち出すーーー
-
-    for (int i = 0; i < 119; i++)
-    {
-        for (int i2 = 0; i2 < 159; i2++)
-        {
-            if (bibunn[i][i2] < -7)
-            {
-                gyou[i][countgyou[i]] = i2;
-                countgyou[i]++;
-            }
-        }
-    }
-    for (int i = 0; i < 119; i++)
-    {
-        for (int i2 = 0; i2 < 159; i2++)
-        {
-
-            if (bibunn[i][i2] > 7)
-            {
-                gyousei[i][countgyousei[i]] = i2;
-                countgyousei[i]++;
-            }
-            else
-            {
-            }
-        }
-    }
-
-    for (int i = 0; i < 120; i++)
-    {
-        if (countgyou[i] == 0)
-        {
-            gyou[i][countgyou[i]] = 60;
-
-            countgyou[i]++;
-        }
-    }
-    for (int i = 0; i < 120; i++)
-    {
-
-        if (countgyousei[i] == 0)
-        {
-            gyousei[i][countgyousei[i]] = 90;
-
-            countgyousei[i]++;
-        }
-    }
-
-    // 手前との差をだす
-
-    ans[119] = 0;
-    anssei[119] = 0;
-
-    for (int i = 118; i >= 0; i--)
-    {
-        for (int i2 = 0; i2 <= countgyou[i]; i2++)
-        {
-            sa[i][i2] = abs(gyou[i][i2] - gyou[i + 1][ans[i + 1]]);
-        }
-        for (int i3 = 0; i3 <= countgyou[i]; i3++)
-        {
-            if (sa[i][i3] < gyoumax[i])
-            {
-                gyoumax[i] = sa[i][i3];
-                ans[i] = i3;
-            }
-        }
-    }
-    for (int i = 118; i >= 0; i--)
-    {
-
-        for (int i2 = 0; i2 <= countgyousei[i]; i2++)
-        {
-            sasei[i][i2] = abs(gyousei[i][i2] - gyousei[i + 1][anssei[i + 1]]);
-        }
-        for (int i3 = 0; i3 <= countgyousei[i]; i3++)
-        {
-            if (sasei[i][i3] < gyoumaxsei[i])
-            {
-                gyoumaxsei[i] = sasei[i][i3];
-                anssei[i] = i3;
-            }
-        }
-    }
-
-    for (int i = 100; i >= 0; i--)
-    {
-
-        if (abs(gyousei[i][anssei[i]] - gyousei[i - 1][anssei[i - 1]]) > 15)
-        {
-            gyousei[i - 1][anssei[i - 1]] = gyousei[i][anssei[i]];
-        }
-    }
-    for (int i = 100; i >= 0; i--)
-    {
-
-        if (abs(gyou[i][ans[i]] - gyou[i - 1][ans[i - 1]]) > 15)
-        {
-            gyou[i - 1][ans[i - 1]] = gyou[i][ans[i]];
-        }
-    }
-    // 比べて偏差出す
-
-    hensa = 80 - gyou[60][ans[60]];
-    for (int i = 0; i < 120; i++)
-    {
-        // if (abs((80-gyousei[i][anssei[i]]) - (80-ALLhennsamae_sei[i])) > 30 /*&& encoder.getTotalCount() >= 200*/)
-        // {
-        //     ALL_hennsa_sei[i] = ALLhennsamae_sei[i];
-        // }
-        // else {
-        ALL_hennsa_sei[i] = 80 - gyousei[i][anssei[i]];
-        ALL_hennsa_hu[i] = 80 - gyou[i][ans[i]];
-        if (abs((80 - (gyou[i][ans[i]] + gyousei[i][anssei[i]]) / 2) - ALLhennsamae[i]) > 30 /*&& encoder.getTotalCount() >= 200*/)
-        {
-            ALL_hennsa[i] = ALLhennsamae[i];
-            // ALL_hennsa[i] = 0;
-
-            //  encoder.setvalue(-1000);
-        }
-        else
-        {
-            ALL_hennsa[i] = 80 - (gyou[i][ans[i]] + gyousei[i][anssei[i]]) / 2;
-        }
-        //}
-        if(hazurereset==1){
-            ALL_hennsa_sei[i] = 0;
-            ALL_hennsa_hu[i] = 0;
-            ALL_hennsa[i] = 0;
-        }
-
-        // if (abs((80 - gyou[i][ans[i]]) - ALLhennsamae_hu[i]) > 30 /*&& encoder.getTotalCount() >= 200*/)
-        // {
-        //     ALL_hennsa_hu[i] = ALLhennsamae_hu[i];
-        // }
-        // else {
-        //}
-
-      
-
-        // else
-        // {
-
-        //}
-    }
-    hazurereset=0;
-
-    for (int i = 0; i < 120; i++)
-    {
-        ALLhennsamae_sei[i] = ALL_hennsa_sei[i];
-        ALLhennsamae_hu[i] = ALL_hennsa_hu[i];
-        ALLhennsamae[i] = ALL_hennsa[i];
-    }
-    hensaG = hensa;
-
-    if (abs(hensa - hensa2) > 40 && encoder.getTotalCount() >= 40000)
-    {
-        hensa = hensa2;
-    }
-
-    hensa2 = hensa;
-
-    // return hensa;
-}
-
-int senn(int linegyou)
-{
-    volatile int leftdata[5][160];
-    volatile int rightdata[5][160];
-    volatile int sentor[5][160];
-    volatile int alldata[5][160];
-    volatile int bardata[5][160];
-
-    volatile int assyukuL[160];
-    volatile int assyukuR[160];
-    volatile int assyukuS[160];
-    volatile int assyukuA[160];
-    volatile int assyukuB[160];
-
-    volatile int lcount = 0;
-    volatile int rcount = 0;
-    volatile int scount = 0;
-    volatile int bcount = 0;
-
-    volatile int lmax = 0;
-    volatile int rmax = 0;
-    volatile int smax = 0;
-    volatile int amax = 0;
-    volatile int bmax = 0;
-
-    volatile int noloine = 60;
-
-    for (int i = 52; i <= 52 + 10; i++)
-    {
-
-        for (int j = 50; j <= 110; j++)
-        {
-
-            bardata[i][j] = getImage(j, i);
-        }
-    }
-
-    for (int i = linegyou; i <= linegyou + 5; i++)
-    {
-
-        for (int j = 0; j <= 80; j++)
-        {
-
-            leftdata[i][j] = getImage(j, i);
-            // ログ取得用(生データ)　データ
-            // log_data[log_no].imageData[i- linegyou][j] = getImage(j, i);
-        }
-    }
-
-    for (int i = linegyou; i <= linegyou + 3; i++)
-    {
-
-        for (int j = 0; j < 160; j++)
-        {
-
-            alldata[i][j] = getImage(j, i);
-            // ログ取得用(生データ)　データ
-            // log_data[log_no].imageData[i- linegyou][j] = getImage(j, i);
-        }
-    }
-
-    for (int i = linegyou; i <= linegyou + 5; i++)
-    {
-
-        for (int j = 81; j <= 159; j++)
-        {
-
-            rightdata[i][j] = getImage(j, i);
-
-            // ログ取得用(生データ)　データ
-            // log_data[log_no].imageData[i- linegyou][j] = getImage(j, i);
-        }
-    }
-
-    for (int i = noloine; i <= noloine + 3; i++)
-    {
-
-        for (int j = 50; j <= 110; j++)
-        {
-
-            sentor[i][j] = getImage(j, i);
-        }
-    }
-
-    for (int i = linegyou; i <= linegyou + 5; i++)
-    {
-
-        for (int j = 0; j <= 80; j++)
-        {
-            if (leftdata[i][j] > assyukuL[j])
-            {
-                assyukuL[j] = leftdata[i][j];
-            }
-            if (leftdata[i][j] > lmax)
-            {
-                lmax = leftdata[i][j];
-            }
-        }
-    }
-
-    for (int i = linegyou; i <= linegyou + 5; i++)
-    {
-
-        for (int j = 81; j <= 159; j++)
-        {
-            if (rightdata[i][j] > assyukuR[j])
-            {
-                assyukuR[j] = rightdata[i][j];
-            }
-            if (rightdata[i][j] > rmax)
-            {
-                rmax = rightdata[i][j];
-            }
-        }
-    }
-    for (int i = 52; i <= 52 + 10; i++)
-    {
-
-        for (int j = 50; j <= 110; j++)
-        {
-            if (bardata[i][j] > assyukuB[j])
-            {
-                assyukuB[j] = bardata[i][j];
-            }
-            if (bardata[i][j] > bmax)
-            {
-                bmax = bardata[i][j];
-            }
-        }
-    }
-    for (int i = linegyou; i <= linegyou + 3; i++)
-    {
-
-        for (int j = 0; j <= 159; j++)
-        {
-            if (alldata[i][j] > log_data[log_no].imageData0[j])
-            {
-                log_data[log_no].imageData0[j] = alldata[i][j];
-            }
-            if (alldata[i][j] > amax)
-            {
-                amax = alldata[i][j];
-            }
-        }
-    }
-
-    for (int i = noloine; i <= noloine + 3; i++)
-    {
-
-        for (int j = 50; j <= 110; j++)
-        {
-            if (sentor[i][j] > assyukuS[j])
-            {
-                assyukuS[j] = sentor[i][j];
-            }
-            if (sentor[i][j] > smax)
-            {
-                smax = sentor[i][j];
-            }
-        }
-    }
-
-    for (int j = 10; j <= 80; j++)
-    {
-        if (assyukuL[j] > lmax * 0.75)
-        {
-            lcount++;
-        }
-    }
-    for (int j = 81; j <= 159; j++)
-    {
-        if (assyukuR[j] > rmax * 0.75)
-        {
-            rcount++;
-        }
-    }
-
-    for (int j = 50; j <= 110; j++)
-    {
-        if (assyukuS[j] > 200)
-        {
-            scount++;
-        }
-    }
-
-    for (int j = 50; j <= 110; j++)
-    {
-        if (assyukuB[j] > bmax * 0.7)
-        {
-            bcount++;
-        }
-    }
-
-    if (lcount > 60 && lmax >= 180)
-    {
-        leftflag = 1;
-    }
-
-    else
-    {
-        leftflag = 0;
-    }
-
-    if (rcount > 60 && rmax >= 180)
-    {
-        rightflag = 1;
-    }
-
-    else
-    {
-        rightflag = 0;
-    }
-
-    if (lcount > 60 && rcount > 60 && rmax >= 180 && lmax >= 180)
-    {
-        crossflag = 1;
-    }
-
-    else
-    {
-        crossflag = 0;
-    }
-
-    if (scount <= 3)
-    {
-        nolineflag = 1;
-    }
-
-    else
-    {
-        nolineflag = 0;
-    }
-
-    if (bcount > 40)
-    {
-        barflag = 1;
-    }
-    else
-    {
-        barflag = 0;
-    }
-    return 0;
-}
 ///********************************************************************
 // イメージ領域のx,yの値(0-255)を取得
 // 引数：x列数(0-159) , y行数(0-119)
 // 戻り値：0～255
 ///********************************************************************
-int getImage(int ix, int iy) { return ImageData_B[ix + 160U * iy]; }
+char getImage(int ix, int iy)
+{
+    return ImageData_B[ix + 160U * iy];
+}
 
 //------------------------------------------------------------------//
 // End of file
