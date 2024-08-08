@@ -210,6 +210,8 @@ volatile signed int leftDeviation[IMAGE_WIDTH];
 volatile signed int rightDeviation[IMAGE_WIDTH];
 volatile signed int difference[IMAGE_HEIGHT][IMAGE_WIDTH];
 
+volatile signed int encoderAcceleration;
+
 typedef struct
 {
     unsigned int cnt_msdwritetime;
@@ -916,38 +918,40 @@ void intTimer(void)
         log_mode = 3; // ログ保存終了
     }
 
+    volatile int handleVal;
+    handleVal = allDeviation[60] / 2.5;
     switch (pattern)
     {
 
     case 0:
         // スイッチ入力待ち
 
-        // if (bar != 0x00)
+        // if (lineflag_cross == 1)
         // {
-        //     led_m(50, 0, 1, 0); // スタートバーセットOK状態→緑色点灯
+        led_m(50, 0, 1, 0); // スタートバーセットOK状態→緑色点灯
 
-        //     if (pushsw_get() == 1)
-        //     {
-        //         pattern = 4;
-        //         log_mode = 1; // ログファイルオープン
-        //         cnt1 = 0;
-        //         encoder.clear();
-        //         break;
-        //     }
-        // }
-        // else
-        // {
-        led_m(10, 1, 0, 0); // スタートバーセットNG状態→赤色点灯
         if (pushsw_get() == 1)
         {
-            pattern = 11;
+            pattern = 4;
             log_mode = 1; // ログファイルオープン
             cnt1 = 0;
-            cnt1 = 0;
+            encoder.clear();
             break;
         }
-        led_m(50, 0, 1, 0); // スタートバーセットOK状態→緑色点灯
-                            // }
+        //}
+        // else
+        // {
+        //     led_m(10, 1, 0, 0); // スタートバーセットNG状態→赤色点灯
+        //     if (pushsw_get() == 1)
+        //     {
+        //         pattern = 11;
+        //         log_mode = 1; // ログファイルオープン
+        //         cnt1 = 0;
+        //         cnt1 = 0;
+        //         break;
+        //     }
+        //     led_m(50, 0, 1, 0); // スタートバーセットOK状態→緑色点灯
+        // }
         break;
 
     case 1:
@@ -961,7 +965,7 @@ void intTimer(void)
         handle(0);
 
         // スタートバーに到着したら
-        if (bar != 0x00)
+        if (lineflag_cross == 1)
         {
             led_m(0, 0, 0, 0);
             log_mode = 2; // ログ記録中
@@ -979,7 +983,7 @@ void intTimer(void)
         handle(0);
         motor(0, 0);
 
-        if (bar == 0 && cnt1 >= 1000)
+        if (lineflag_cross == 0 && cnt1 >= 1000)
         {
             pattern = 3;
         }
@@ -997,7 +1001,7 @@ void intTimer(void)
         break;
 
     case 4:
-        if (bar == 0)
+        if (lineflag_cross == 0)
         {
             pattern = 10;
         }
@@ -1005,7 +1009,7 @@ void intTimer(void)
 
     case 10:
         // スタートバーが開いたかチェック
-        if (bar == 0x00)
+        if (lineflag_cross == 0)
         {
             // スタート！！
             led_m(0, 0, 0, 0);
@@ -1019,67 +1023,40 @@ void intTimer(void)
 
     case 11:
         // 通常トレース
+        led_m(50, 1, 1, 1);
+
+        if (allDeviation[60] < 50 && encoder.getTotalCount() >= 600)
+        {
+            if (lineflag_cross)
+            {
+                pattern = 21;
+            }
+            if (lineflag_right)
+            {
+                pattern = 51;
+            }
+            if (lineflag_left)
+            {
+                pattern = 61;
+            }
+        }
+
         motor(60, 60);
-        handle(allDeviation[30] / 10);
-        break;
+        handle(handleVal);
 
-    case 12:
-        // 右へ大曲げの終わりのチェック
-        if (check_crossline() == 1)
-        { // 大曲げ中もクロスラインチェック
-            pattern = 21;
-            break;
-        }
-        if (check_rightline() == 1)
-        { // 右ハーフラインチェック
-            pattern = 51;
-            break;
-        }
-        if (check_leftline() == 1)
-        { // 左ハーフラインチェック
-            pattern = 61;
-            break;
-        }
-        if (sensor_inp(MASK3_3) == 0x06)
-        {
-            pattern = 11;
-        }
-        break;
-
-    case 13:
-        // 左へ大曲げの終わりのチェック
-        if (check_crossline() == 1)
-        { // 大曲げ中もクロスラインチェック
-            pattern = 21;
-            break;
-        }
-        if (check_rightline() == 1)
-        { // 右ハーフラインチェック
-            pattern = 51;
-            break;
-        }
-        if (check_leftline() == 1)
-        { // 左ハーフラインチェック
-            pattern = 61;
-            break;
-        }
-        if (sensor_inp(MASK3_3) == 0x60)
-        {
-            pattern = 11;
-        }
         break;
 
     case 21:
         // クロスライン検出時の処理
         led_m(100, 1, 0, 0);
-        motor(0, 0);
+        motor(30, 30);
         pattern = 22;
-        cnt1 = 0;
+        encoder.clear();
         break;
 
     case 22:
         // クロスラインを読み飛ばす
-        if (cnt1 >= 100)
+        if (encoder.getTotalCount() >= 200)
         {
             pattern = 23;
             cnt1 = 0;
@@ -1088,59 +1065,38 @@ void intTimer(void)
 
     case 23:
         // クロスライン後のトレース、クランク検出
-        if (sensor_inp(MASK4_0) == 0xf0)
+        if (lineflag_left)
         {
             // 左クランクと判断→左クランククリア処理へ
             led_m(100, 0, 1, 0);
-            handle(-38);
+            handle(30);
             motor(10, 50);
             pattern = 31;
-            cnt1 = 0;
+            encoder.clear();
             break;
         }
-        if (sensor_inp(MASK0_4) == 0x0f)
+        if (lineflag_right)
         {
             // 右クランクと判断→右クランククリア処理へ
             led_m(100, 0, 0, 1);
-            handle(38);
+            handle(-30);
             motor(50, 10);
             pattern = 41;
-            cnt1 = 0;
+            encoder.clear();
             break;
         }
-        switch (sensor_inp(MASK3_3))
-        {
-        case 0x00:
-            // センタ→まっすぐ
-            handle(0);
-            motor(40, 40);
-            break;
-        case 0x04:
-        case 0x06:
-        case 0x07:
-        case 0x03:
-            // 左寄り→右曲げ
-            handle(8);
-            motor(40, 35);
-            break;
-        case 0x20:
-        case 0x60:
-        case 0xe0:
-        case 0xc0:
-            // 右寄り→左曲げ
-            handle(-8);
-            motor(35, 40);
-            break;
-        }
+        motor(30, 30);
+        handle(handleVal);
+
         break;
 
     case 31:
         // 左クランククリア処理　安定するまで少し待つ
         led_m(100, 0, 1, 0);
-        if (cnt1 >= 200)
+        if (encoder.getTotalCount() >= 500)
         {
-            pattern = 32;
-            cnt1 = 0;
+            pattern = 11;
+            encoder.clear();
         }
         break;
 
@@ -1174,10 +1130,10 @@ void intTimer(void)
     case 41:
         // 右クランククリア処理　安定するまで少し待つ
         led_m(100, 0, 0, 1);
-        if (cnt1 >= 200)
+        if (encoder.getTotalCount() >= 500)
         {
-            pattern = 42;
-            cnt1 = 0;
+            pattern = 11;
+            encoder.clear();
         }
         break;
 
@@ -1211,19 +1167,19 @@ void intTimer(void)
         // 右ハーフライン検出時の処理
         led_m(100, 0, 1, 0);
         handle(0);
-        motor(0, 0);
+        motor(30, 30);
         pattern = 52;
-        cnt1 = 0;
+        encoder.clear();
         break;
 
     case 52:
         // 右ハーフラインを読み飛ばす
-        if (cnt1 >= 100)
+        if (encoder.getCnt() >= 200)
         {
             pattern = 53;
             cnt1 = 0;
         }
-        if (check_crossline() == 1)
+        if (lineflag_cross == 1)
         {
             pattern = 21;
             break;
@@ -1232,50 +1188,26 @@ void intTimer(void)
 
     case 53:
         // 右ハーフライン後のトレース、レーンチェンジ
-        if (sensor_inp(MASK4_4) == 0x00)
+        if (!lineflag_center)
         {
-            handle(15);
+            handle(-23);
             motor(40, 31);
             pattern = 54;
             cnt1 = 0;
             break;
         }
-        switch (sensor_inp(MASK3_3))
-        {
-        case 0x00:
-            // センタ→まっすぐ
-            handle(0);
-            motor(40, 40);
-            break;
-        case 0x04:
-        case 0x06:
-        case 0x07:
-        case 0x03:
-            // 左寄り→右曲げ
-            handle(8);
-            motor(40, 35);
-            break;
-        case 0x20:
-        case 0x60:
-        case 0xe0:
-        case 0xc0:
-            // 右寄り→左曲げ
-            handle(-8);
-            motor(35, 40);
-            break;
-        default:
-            break;
-        }
+        handle(handleVal);
+
         break;
 
     case 54:
         // 右レーンチェンジ終了のチェック
-        b = sensor_inp(MASK4_4);
-        if (b == 0x3c || b == 0x1c || b == 0x38)
+
+        if (lineflag_center)
         {
             led_m(100, 0, 0, 0);
             pattern = 11;
-            cnt1 = 0;
+            encoder.clear();
         }
         break;
 
@@ -1283,19 +1215,19 @@ void intTimer(void)
         // 左ハーフライン検出時の処理
         led_m(100, 0, 0, 1);
         handle(0);
-        motor(0, 0);
+        motor(30, 30);
         pattern = 62;
-        cnt1 = 0;
+        encoder.clear();
         break;
 
     case 62:
         // 左ハーフラインを読み飛ばす
-        if (cnt1 >= 100)
+        if (encoder.getTotalCount() >= 200)
         {
             pattern = 63;
             cnt1 = 0;
         }
-        if (check_crossline() == 1)
+        if (lineflag_cross == 1)
         {
             pattern = 21;
             break;
@@ -1304,50 +1236,25 @@ void intTimer(void)
 
     case 63:
         // 左ハーフライン後のトレース、レーンチェンジ
-        if (sensor_inp(MASK4_4) == 0x00)
+        if (!lineflag_center)
         {
-            handle(-15);
+            handle(23);
             motor(31, 40);
             pattern = 64;
             cnt1 = 0;
             break;
         }
-        switch (sensor_inp(MASK3_3))
-        {
-        case 0x00:
-            // センタ→まっすぐ
-            handle(0);
-            motor(40, 40);
-            break;
-        case 0x04:
-        case 0x06:
-        case 0x07:
-        case 0x03:
-            // 左寄り→右曲げ
-            handle(8);
-            motor(40, 35);
-            break;
-        case 0x20:
-        case 0x60:
-        case 0xe0:
-        case 0xc0:
-            // 右寄り→左曲げ
-            handle(-8);
-            motor(35, 40);
-            break;
-        default:
-            break;
-        }
+        handle(handleVal);
         break;
 
     case 64:
         // 左レーンチェンジ終了のチェック
-        b = sensor_inp(MASK4_4);
-        if (b == 0x38 || b == 0x1c || b == 0x3c)
+
+        if (lineflag_center)
         {
             led_m(100, 0, 0, 0);
             pattern = 11;
-            cnt1 = 0;
+            encoder.clear();
         }
         break;
 
@@ -1772,18 +1679,18 @@ char getImage(int ix, int iy)
 
 void createLineFlag(void)
 {
-    volatile int crosslineWidth = 60; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
-    volatile int centerWidth = 40;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int crosslineWidth = 100; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
+    volatile int centerWidth = 40;     // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
     volatile int rowNum = 60;               // ラインを検出する行数
     volatile int brightnessThreshold = 200; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
     volatile int imageData[IMAGE_WIDTH];    // 特定の一行のみの画像の明るさデータが格納される配列
 
-    volatile int leftCount;   // 画像の左側に閾値以上の値がどれくらいあるかをカウントする
-    volatile int rightCount;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
-    volatile int centerCount; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
+    volatile int leftCount = 0;   // 画像の左側に閾値以上の値がどれくらいあるかをカウントする
+    volatile int rightCount = 0;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
+    volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
-    volatile int crossCountThreshold = 50;  // 画像のクロスラインのカウント数の閾値
+    volatile int crossCountThreshold = 70;  // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
 
     // imageDataに画像データを格納する
@@ -1793,7 +1700,7 @@ void createLineFlag(void)
     }
 
     // レフトライン検出処理
-    for (int x = IMAGE_WIDTH / 2 - crosslineWidth / 2; x < IMAGE_WIDTH / 2; x++) // 画像の中心-クロスラインの幅の半分(レフトラインの幅)から画像の中心まで
+    for (int x = IMAGE_CENTER - crosslineWidth / 2; x < IMAGE_CENTER; x++) // 画像の中心-クロスラインの幅の半分(レフトラインの幅)から画像の中心まで
     {
         if (imageData[x] > brightnessThreshold) // その画素が閾値よりも大きい値が来ていたらカウント++
         {
@@ -1814,7 +1721,7 @@ void createLineFlag(void)
     // ここからは自分で読んで理解して！
 
     //  ライトライン検出処理
-    for (int x = IMAGE_WIDTH; x < IMAGE_WIDTH / 2 + crosslineWidth / 2; x++)
+    for (int x = IMAGE_CENTER; x < IMAGE_CENTER + crosslineWidth / 2; x++)
     {
         if (imageData[x] > brightnessThreshold)
         {
