@@ -1072,12 +1072,12 @@ void intTimer(void)
             if (lineflag_cross)
             {
                 pattern = 21;
-                crankDistance = 370;
+                crankDistance = 400;
 
-                crankHandleVal = 47;
+                crankHandleVal = 42;
 
                 crankMotorPowerOUT = 80;
-                crankMotorPowerIN = -80;
+                crankMotorPowerIN = -40;
             }
             if (lineflag_right)
             {
@@ -1090,7 +1090,7 @@ void intTimer(void)
                 laneMotorPowerRight = 0;
 
                 laneCounterHandleVal = 34;
-                laneCounterMotorPowerLeft = 40;
+                laneCounterMotorPowerLeft = 20;
                 laneCounterMotorPowerRight = 90;
             }
             if (lineflag_left)
@@ -1145,22 +1145,24 @@ void intTimer(void)
 
         if (lineflag_left)
         {
+            encoder.clear();
+
             // 左クランクと判断
             led_m(100, 0, 1, 0);
             handle(crankHandleVal);
             motor(crankMotorPowerIN, crankMotorPowerOUT);
             pattern = 31;
-            encoder.clear();
             break;
         }
         if (lineflag_right)
         {
+            encoder.clear();
+
             // 右クランクと判断
             led_m(100, 0, 0, 1);
             handle(-crankHandleVal);
             motor(crankMotorPowerOUT, crankMotorPowerIN);
             pattern = 41;
-            encoder.clear();
             break;
         }
         createBrakeMotorVal(38);
@@ -1742,7 +1744,7 @@ void createLineFlag(int rowNum)
 
     volatile int centerRowNum = 50; // ラインを検出する行数
 
-    volatile int brightnessThreshold = 180; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
+    volatile int brightnessThreshold = 150; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
 
     volatile int bigImageData[IMAGE_WIDTH][IMAGE_HEIGHT]; // 特定の一行のみの画像の明るさデータが格納される配列
 
@@ -1755,10 +1757,15 @@ void createLineFlag(int rowNum)
 
     volatile int crossCountThreshold = 90;  // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
-    if (pattern != 11)
+    if (rowNum < 55)
     {
         rowNum = 60;
     }
+    if (pattern != 11)
+    {
+        rowNum = 54;
+    }
+
     // imageDataに画像データを格納する
     for (int y = rowNum; y < rowNum + 4; y++)
     {
@@ -2081,8 +2088,8 @@ void createHandleVal(void)
     float middleCurveGain = 0.84;
     float bigCurveCurveGain = 0.78;
 
-    float middleEncoderGain = 1.1;
-    float bigEncoderGain = 1.3;
+    float middleEncoderGain = 0.6;
+    float bigEncoderGain = 0.8;
 
     float middleConstEncoderGain = 0;
     float bigConstEncoderGain = 0;
