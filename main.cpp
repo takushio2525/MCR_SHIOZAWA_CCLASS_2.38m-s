@@ -142,6 +142,7 @@ unsigned long convertBCD_CharToLong(unsigned char hex);
 //------------------------------------------------------------------//
 // ここから自作関数のプロトタイプ宣言を追加
 //------------------------------------------------------------------//
+void easyCreateDeviation(int rowNum);
 void createLineFlag(int rowNum); // ラインを検出する行数); // ラインフラグを生成する関数　　    switch (counter++)内で画像更新につき一回ごと実行
 void createDeviation(void);
 
@@ -203,6 +204,11 @@ volatile int msd_handle, msd_l, msd_r;
 //------------------------------------------------------------------//
 // ここから自作のグローバル変数を追加
 //------------------------------------------------------------------//
+
+volatile int easyImageData[IMAGE_WIDTH];
+volatile int easyDifference[IMAGE_WIDTH];
+volatile int easyDeviation;
+volatile int easyDifferencePoint[IMAGE_WIDTH];
 
 volatile bool endflag = false;
 
@@ -932,7 +938,7 @@ void intTimer(void)
             log_data[log_no].total = encoder.getTotalCount();
             for (int i = 0; i < 160; i++)
             {
-                log_data[log_no].imageData0[i] = getImage(i, 37);
+                log_data[log_no].imageData0[i] = getImage(i, 60);
             }
 
             log_no++;
@@ -1069,7 +1075,7 @@ void intTimer(void)
     case 11:
         // 通常トレース
         led_m(50, 1, 1, 1);
-        if (abs(allDeviation[50]) < 10 && encoder.getTotalCount() >= 600)
+        if (abs(allDeviation[60]) < 16 && encoder.getTotalCount() >= 600)
         {
             lineSkipDistance = 100;
 
@@ -1079,7 +1085,7 @@ void intTimer(void)
             if (lineflag_cross)
             {
                 pattern = 21;
-                crankDistance = 400;
+                crankDistance = 350;
 
                 crankHandleVal = 42;
 
@@ -1119,7 +1125,7 @@ void intTimer(void)
         motor(leftMotor, rightMotor);
         handle(handleVal);
 
-        if (encoder.getCourseCount() >= 1120 * 48)
+        if (encoder.getCourseCount() >= 1120 * 50)
         {
             pattern = 101;
             cnt1 = 0;
@@ -1746,12 +1752,12 @@ char getImage(int ix, int iy)
 
 void createLineFlag(int rowNum)
 {
-    volatile int crosslineWidth = 100; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
+    volatile int crosslineWidth = 120; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
     volatile int centerWidth = 60;     // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
     volatile int centerRowNum = 50; // ラインを検出する行数
 
-    volatile int brightnessThreshold = 150; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
+    volatile int brightnessThreshold = 230; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
 
     volatile int bigImageData[IMAGE_WIDTH][IMAGE_HEIGHT]; // 特定の一行のみの画像の明るさデータが格納される配列
 
@@ -1762,7 +1768,7 @@ void createLineFlag(int rowNum)
     volatile int rightCount = 0;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
     volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
-    volatile int crossCountThreshold = 90;  // 画像のクロスラインのカウント数の閾値
+    volatile int crossCountThreshold = 100; // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
     if (rowNum < 55)
     {
@@ -1774,7 +1780,7 @@ void createLineFlag(int rowNum)
     }
 
     // imageDataに画像データを格納する
-    for (int y = rowNum; y < rowNum + 8; y++)
+    for (int y = rowNum; y < rowNum + 10; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
         {
@@ -1783,7 +1789,7 @@ void createLineFlag(int rowNum)
             // imageData[x] = getImage(x, rowNum);
         }
     }
-    for (int y = rowNum; y < rowNum + 8; y++)
+    for (int y = rowNum; y < rowNum + 10; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
         {
@@ -2031,12 +2037,12 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 3;
-    volatile signed int targetSpeed = 50;
+    volatile signed int accelerationBrakeGain = 20;
+    volatile signed int targetSpeed = 56;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
 
-    volatile signed int limitAcceleration = 1;
+    volatile signed int limitAcceleration = 3;
     leftMotor = MAX_MOTOR_POWER - encoderAcceleration * accelerationBrakeGain;
     rightMotor = MAX_MOTOR_POWER - encoderAcceleration * accelerationBrakeGain;
 
@@ -2086,28 +2092,30 @@ void createBrakeMotorVal(int targetSpeed)
 }
 void createHandleVal(void)
 {
-    volatile signed int highSpeed = 47;
+    volatile signed int highSpeed = 50;
     volatile signed int middleSpeed = 40;
 
-    volatile signed int limitSpeed = 35;
+    volatile signed int limitSpeed = 45;
 
     float straightCurveGain = 0.4;
-    float middleCurveGain = 0.84;
-    float bigCurveCurveGain = 0.78;
+    float middleCurveGain = 1.2;
+    float bigCurveCurveGain = 1;
 
-    float middleEncoderGain = 1;
-    float bigEncoderGain = 1.6;
+    float middleEncoderGain = 0.8;
+    float bigEncoderGain = 1.3;
 
-    float middleConstEncoderGain = 15;
-    float bigConstEncoderGain = 15;
+    float middleConstEncoderGain = 20;
+    float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
     volatile signed int middleCurveDeviation = 18;
     volatile signed int bigCurveDeviation = 40;
 
-    volatile signed int farTraceLine = 30;
-    volatile signed int midTraceLine = 40;
+    volatile signed int farTraceLine = 35;
+    volatile signed int midTraceLine = 38;
     volatile signed int nearTraceLine = 43;
+
+    float differenceGain = 5;
 
     volatile signed int traceLine;
     if (encoder.getCnt() >= highSpeed)
@@ -2123,8 +2131,10 @@ void createHandleVal(void)
         traceLine = nearTraceLine;
     }
 
-    volatile signed int centerTraceLine = 120;
-    volatile signed int deviationDifference = allDeviation[centerTraceLine] + (allDeviation[centerTraceLine] - allDeviation[traceLine]);
+    volatile signed int centerTraceLine = 40;
+    volatile signed int frontTraceLine = 120;
+
+    volatile signed int deviationDifference = (allDeviation[traceLine] - allDeviation[frontTraceLine]);
 
     if (abs(allDeviation[traceLine]) >= straightDeviation)
     {
@@ -2134,22 +2144,22 @@ void createHandleVal(void)
     {
         if (encoder.getCnt() >= limitSpeed)
         {
-            handleVal = deviationDifference * (encoder.getCnt() * middleEncoderGain + middleConstEncoderGain) / 100;
+            handleVal = allDeviation[centerTraceLine] * abs(encoder.getCnt() * middleEncoderGain + middleConstEncoderGain + deviationDifference * differenceGain) / 100;
         }
         else
         {
-            handleVal = deviationDifference * (middleCurveGain + middleConstEncoderGain);
+            handleVal = allDeviation[centerTraceLine] * abs(middleCurveGain + middleConstEncoderGain + deviationDifference * differenceGain);
         }
     }
     else if (abs(allDeviation[traceLine]) >= bigCurveDeviation)
     {
         if (encoder.getCnt() >= limitSpeed)
         {
-            handleVal = deviationDifference * (encoder.getCnt() * bigEncoderGain + bigConstEncoderGain) / 100;
+            handleVal = allDeviation[centerTraceLine] * abs(encoder.getCnt() * bigEncoderGain + bigConstEncoderGain + deviationDifference * differenceGain) / 100;
         }
         else
         {
-            handleVal = deviationDifference * (bigCurveCurveGain + bigConstEncoderGain);
+            handleVal = allDeviation[centerTraceLine] * abs(bigCurveCurveGain + bigConstEncoderGain + deviationDifference * differenceGain);
         }
     }
     else
@@ -2157,6 +2167,41 @@ void createHandleVal(void)
         handleVal = 0;
     }
 }
+
+void easyCreateDeviation(int rowNum)
+{
+
+    for (int x = 0; x < IMAGE_WIDTH; x++)
+    {
+        easyImageData[x] = getImage(x, rowNum);
+    }
+
+    for (int x = 0; x < IMAGE_WIDTH - 1; x++)
+    {
+        easyDifference[x] = easyImageData[x] - easyImageData[x + 1];
+    }
+
+    int count = 0;
+    for (int x = 0; x < IMAGE_WIDTH - 1; x++)
+    {
+        if (easyDifference[x] < 0)
+        {
+            easyDifferencePoint[count] = x;
+            count++;
+        }
+    }
+
+    int min = IMAGE_WIDTH;
+    for (int c = 0; c < count; c++)
+    {
+        if (abs(easyDifferencePoint[c] - IMAGE_CENTER) < min)
+        {
+            min = abs(easyDifferencePoint[c] - IMAGE_CENTER);
+            easyDeviation = easyDifferencePoint[c] - IMAGE_CENTER;
+        }
+    }
+}
+
 //------------------------------------------------------------------//
 // End of file
 //------------------------------------------------------------------//
