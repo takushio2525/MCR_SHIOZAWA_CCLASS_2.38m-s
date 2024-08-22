@@ -2042,8 +2042,8 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 8;
-    volatile signed int targetSpeed = 56;
+    volatile signed int accelerationBrakeGain = 13;
+    volatile signed int targetSpeed = 60;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
 
@@ -2106,21 +2106,21 @@ void createHandleVal(void)
     float middleCurveGain = 1.2;
     float bigCurveCurveGain = 1;
 
-    float middleEncoderGain = 0.2;
-    float bigEncoderGain = 0.2;
+    float middleEncoderGain = 0.0;
+    float bigEncoderGain = 0.0;
 
     float middleConstEncoderGain = 0;
     float bigConstEncoderGain = 0;
 
     volatile signed int straightDeviation = 0;
-    volatile signed int middleCurveDeviation = 18;
+    volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 40;
 
-    volatile signed int farTraceLine = 30;
-    volatile signed int midTraceLine = 35;
-    volatile signed int nearTraceLine = 40;
+    volatile signed int farTraceLine = 35;
+    volatile signed int midTraceLine = 40;
+    volatile signed int nearTraceLine = 45;
 
-    float differenceGain = 50;
+    float differenceGain = 60;
 
     volatile signed int traceLine;
     if (encoder.getCnt() >= highSpeed)
@@ -2139,7 +2139,13 @@ void createHandleVal(void)
     volatile signed int centerTraceLine = traceLine + 20;
     volatile signed int frontTraceLine = 110;
 
-    volatile signed int deviationDifference = abs(allDeviation[frontTraceLine] - allDeviation[traceLine]);
+    // volatile signed int deviationDifference = abs(allDeviation[frontTraceLine] - allDeviation[traceLine]);
+    int allDeviationWa = 0;
+    for (int i = traceLine; i < frontTraceLine; i++)
+    {
+        allDeviationWa += allDeviation[i];
+    }
+    volatile signed int deviationDifference = abs(allDeviationWa / (frontTraceLine - traceLine));
 
     if (abs(allDeviation[traceLine]) >= straightDeviation)
     {
