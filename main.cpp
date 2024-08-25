@@ -205,6 +205,8 @@ volatile int msd_handle, msd_l, msd_r;
 // ここから自作のグローバル変数を追加
 //------------------------------------------------------------------//
 
+volatile signed int deviationDifference;
+
 volatile int easyImageData[IMAGE_WIDTH];
 volatile int easyDifference[IMAGE_WIDTH];
 volatile int easyDeviation;
@@ -926,7 +928,7 @@ void intTimer(void)
             // ログ（RAM）記録
             log_data[log_no].cnt_msdwritetime = cnt_msdwritetime;
             log_data[log_no].pattern = pattern;
-            log_data[log_no].convertBCD = sensor_inp(0xff);
+            log_data[log_no].convertBCD = deviationDifference;
             log_data[log_no].handle = msd_handle;
             log_data[log_no].hennsa = allDeviation[37]; // 偏差を検出するプログラムを作ったら追加
             log_data[log_no].encoder = encoder.getCnt();
@@ -2106,21 +2108,22 @@ void createHandleVal(void)
     float middleCurveGain = 1.2;
     float bigCurveCurveGain = 1;
 
-    float middleEncoderGain = 0.0;
-    float bigEncoderGain = 0.0;
+    float middleEncoderGain = 1.5;
+    float bigEncoderGain = 1;
 
-    float middleConstEncoderGain = 0;
-    float bigConstEncoderGain = 0;
+    float middleConstEncoderGain = 38;
+    float bigConstEncoderGain = 40;
 
     volatile signed int straightDeviation = 0;
-    volatile signed int middleCurveDeviation = 7;
-    volatile signed int bigCurveDeviation = 40;
+    volatile signed int middleCurveDeviation = 15;
+    volatile signed int bigCurveDeviation = 48;
 
-    volatile signed int farTraceLine = 35;
-    volatile signed int midTraceLine = 40;
-    volatile signed int nearTraceLine = 45;
+    volatile signed int farTraceLine = 30;
+    volatile signed int midTraceLine = 35;
+    volatile signed int nearTraceLine = 40;
 
-    float differenceGain = 60;
+    float midDifferenceGain = 0.2;
+    float bigDifferenceGain = 0.7;
 
     volatile signed int traceLine;
     if (encoder.getCnt() >= highSpeed)
@@ -2139,34 +2142,36 @@ void createHandleVal(void)
     volatile signed int centerTraceLine = traceLine + 20;
     volatile signed int frontTraceLine = 110;
 
-    // volatile signed int deviationDifference = abs(allDeviation[frontTraceLine] - allDeviation[traceLine]);
-    int allDeviationWa = 0;
-    for (int i = traceLine; i < frontTraceLine; i++)
-    {
-        allDeviationWa += allDeviation[i];
-    }
-    volatile signed int deviationDifference = abs(allDeviationWa / (frontTraceLine - traceLine));
+    deviationDifference = abs(allDeviation[frontTraceLine] - allDeviation[traceLine]);
+    // int allDeviationWa = 0;
+    // for (int i = traceLine; i < frontTraceLine; i++)
+    // {
+    //     allDeviationWa += allDeviation[i];
+    // }
+    // deviationDifference = abs(allDeviationWa);
 
-    if (abs(allDeviation[traceLine]) >= straightDeviation)
+    if (abs(allDeviation[traceLine]) <= straightDeviation)
     {
-        handleVal = allDeviation[traceLine] * straightCurveGain;
+        handleVal = 0;
     }
-    else if (abs(allDeviation[traceLine]) >= middleCurveDeviation)
+    else if (abs(allDeviation[traceLine]) <= middleCurveDeviation)
     {
         // if (encoder.getCnt() >= limitSpeed)
         // {
-        handleVal = allDeviation[centerTraceLine] * abs(encoder.getCnt() * middleEncoderGain + middleConstEncoderGain + deviationDifference * differenceGain);
+        handleVal = allDeviation[traceLine] * straightCurveGain;
+
         //}
         // else
         // {
         //     handleVal = allDeviation[traceLine] * abs(middleCurveGain + middleConstEncoderGain + deviationDifference * differenceGain);
         // }
     }
-    else if (abs(allDeviation[traceLine]) >= bigCurveDeviation)
+    else if (deviationDifference <= bigCurveDeviation)
     {
         // if (encoder.getCnt() >= limitSpeed)
         // {
-        handleVal = allDeviation[centerTraceLine] * abs(encoder.getCnt() * bigEncoderGain + bigConstEncoderGain + deviationDifference * differenceGain);
+        handleVal = (allDeviation[centerTraceLine]) * abs(encoder.getCnt() * middleEncoderGain + deviationDifference) / 100;
+
         //}
         // else
         // {
@@ -2175,7 +2180,7 @@ void createHandleVal(void)
     }
     else
     {
-        handleVal = 0;
+        handleVal = (allDeviation[centerTraceLine]) * abs(encoder.getCnt() * bigEncoderGain + deviationDifference) / 100;
     }
 }
 
