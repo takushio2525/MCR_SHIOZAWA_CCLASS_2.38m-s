@@ -1090,12 +1090,12 @@ void intTimer(void)
             if (lineflag_cross)
             {
                 pattern = 21;
-                crankDistance = 420;
+                crankDistance = 390;
 
                 crankHandleVal = 50;
 
                 crankMotorPowerOUT = 60;
-                crankMotorPowerIN = -60;
+                crankMotorPowerIN = -80;
             }
             if (lineflag_right)
             {
