@@ -1091,12 +1091,12 @@ void intTimer(void)
             if (lineflag_cross)
             {
                 pattern = 21;
-                crankDistance = 410;
+                crankDistance = 460;
 
                 crankHandleVal = 43;
 
-                crankMotorPowerOUT = 60;
-                crankMotorPowerIN = 30;
+                crankMotorPowerOUT = 100;
+                crankMotorPowerIN = 55;
             }
             if (lineflag_right)
             {
@@ -1148,7 +1148,7 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(25);
+        createBrakeMotorVal(30);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1187,7 +1187,7 @@ void intTimer(void)
 
             break;
         }
-        createBrakeMotorVal(25);
+        createBrakeMotorVal(30);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -2115,21 +2115,21 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.4;
+    float straightCurveGain = 0.3;
     float middleCurveGain = 0.84;
     float bigCurveCurveGain = 0.78;
 
     float middleEncoderGain = 0.7;
     float bigEncoderGain = 0.7;
 
-    float middleConstEncoderGain = 30;
+    float middleConstEncoderGain = 31;
     float bigConstEncoderGain = 25;
 
     volatile signed int straightDeviation = 0;
-    volatile signed int middleCurveDeviation = 10;
+    volatile signed int middleCurveDeviation = 11;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 37;
+    volatile signed int farTraceLine = 40;
     volatile signed int midTraceLine = 40;
     volatile signed int nearTraceLine = 40;
 
@@ -2169,7 +2169,7 @@ void createHandleVal(void)
     {
         // if (encoder.getCnt() >= limitSpeed)
         // {
-        handleVal = allDeviation[35] * straightCurveGain;
+        handleVal = allDeviation[traceLine] * straightCurveGain;
 
         // }
         // else
