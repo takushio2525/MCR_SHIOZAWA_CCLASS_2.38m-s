@@ -930,9 +930,9 @@ void intTimer(void)
             log_data[log_no].pattern = pattern;
             log_data[log_no].convertBCD = deviationDifference;
             log_data[log_no].handle = msd_handle;
-            log_data[log_no].hennsa = allDeviation[37]; // 偏差を検出するプログラムを作ったら追加
+            log_data[log_no].hennsa = allDeviation[60]; // 偏差を検出するプログラムを作ったら追加
             log_data[log_no].encoder = encoder.getCnt();
-            log_data[log_no].motorL = msd_l;
+            log_data[log_no].motorL = /*msd_l*/ getImage(-allDeviation[60] + IMAGE_CENTER - 35, 60);
             log_data[log_no].motorR = msd_r;
 
             log_data[log_no].flagL = lineflag_left;
@@ -1811,19 +1811,21 @@ void createLineFlag(int rowNum)
             // imageData[x] = getImage(x, rowNum);
         }
     }
-    for (int y = rowNum; y < rowNum + 5; y++)
+    for (int y = rowNum; y < rowNum + 3; y++)
     {
-        if (allDeviation[y] + IMAGE_CENTER - 30 - (y - rowNum) / 2 < 0)
+        if (allDeviation[y] + IMAGE_CENTER - 35 - (y - rowNum) / 2 > 0)
         {
-            bigLeftData[y] = getImage(allDeviation[y] + IMAGE_CENTER - 30 - (y - rowNum) / 2, y);
+            bigLeftData[y] = getImage(-allDeviation[y] + IMAGE_CENTER - 35 - (y - rowNum) / 2, y);
+            // bigLeftData[y] = getImage(40, 60);
         }
         else
         {
             bigLeftData[y] = 0;
         }
-        if (allDeviation[y] + IMAGE_CENTER + 30 + (y - rowNum) / 2 > IMAGE_RIGHT_EDGE)
+        if (allDeviation[y] + IMAGE_CENTER + 35 + (y - rowNum) / 2 < IMAGE_RIGHT_EDGE)
         {
-            bigRightData[y] = getImage(allDeviation[y] + IMAGE_CENTER + 30 + (y - rowNum) / 2, y);
+            bigRightData[y] = getImage(-allDeviation[y] + IMAGE_CENTER + 35 + (y - rowNum) / 2, y);
+            // bigRightData[y] = getImage(120, 60);
         }
         else
         {
@@ -1831,7 +1833,7 @@ void createLineFlag(int rowNum)
         }
     }
 
-    for (int y = rowNum; y < rowNum + 10; y++)
+    for (int y = rowNum; y < rowNum + 3; y++)
     {
         if (bigLeftData[y] > leftData)
         {
@@ -1867,15 +1869,7 @@ void createLineFlag(int rowNum)
     }
 
     // leftCountがcrossCountThresholdの半分(レフトラインの判定基準)より多く判定されたらフラグtrue
-    // if (leftCount > crossCountThreshold / 2)
-    // {
-    //     lineflag_left = true;
-    // }
-    // else
-    // {
-    //     lineflag_left = false;
-    // }
-    if (leftData > brightnessThreshold)
+    if (leftCount > crossCountThreshold / 2)
     {
         lineflag_left = true;
     }
@@ -1883,26 +1877,34 @@ void createLineFlag(int rowNum)
     {
         lineflag_left = false;
     }
+    // if (leftData > brightnessThreshold)
+    // {
+    //     lineflag_left = true;
+    // }
+    // else
+    // {
+    //     lineflag_left = false;
+    // }
 
     // ここからは自分で読んで理解して！
 
     //  ライトライン検出処理
-    for (int x = IMAGE_CENTER; x < IMAGE_CENTER + crosslineWidth / 2; x++)
-    {
-        if (imageData[x] > brightnessThreshold)
-        {
-            rightCount++;
-        }
-    }
+    // for (int x = IMAGE_CENTER; x < IMAGE_CENTER + crosslineWidth / 2; x++)
+    // {
+    //     if (imageData[x] > brightnessThreshold)
+    //     {
+    //         rightCount++;
+    //     }
+    // }
 
-    // if (rightCount > crossCountThreshold / 2)
-    // {
-    //     lineflag_right = true;
-    // }
-    // else
-    // {
-    //     lineflag_right = false;
-    // }
+    if (rightCount > crossCountThreshold / 2)
+    {
+        lineflag_right = true;
+    }
+    else
+    {
+        lineflag_right = false;
+    }
 
     if (rightData > brightnessThreshold)
     {
@@ -2102,10 +2104,10 @@ void createDeviation(void)
         leftDeviation[y] = IMAGE_CENTER - leftExceedingXPositions[y][leftCenterCount[y]];
         rightDeviation[y] = IMAGE_CENTER - rightExceedingXPositions[y][rightCenterCount[y]];
         // allDeviation[y] = leftDeviation[y] + rightDeviation[y];
-        if (abs(allDeviation[y] - (IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2)) < beforDeviationThreshold)
-        {
-            allDeviation[y] = IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2;
-        }
+        // if (abs(allDeviation[y] - (IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2)) < beforDeviationThreshold)
+        // {
+        allDeviation[y] = IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2;
+        // }
     }
 }
 
