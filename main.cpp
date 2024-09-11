@@ -1813,8 +1813,22 @@ void createLineFlag(int rowNum)
     }
     for (int y = rowNum; y < rowNum + 5; y++)
     {
-        bigLeftData[y] = getImage(allDeviation[y] + IMAGE_CENTER - 30 - (y - rowNum) / 2, y);
-        bigRightData[y] = getImage(allDeviation[y] + IMAGE_CENTER + 30 + (y - rowNum) / 2, y);
+        if (allDeviation[y] + IMAGE_CENTER - 30 - (y - rowNum) / 2 < 0)
+        {
+            bigLeftData[y] = getImage(allDeviation[y] + IMAGE_CENTER - 30 - (y - rowNum) / 2, y);
+        }
+        else
+        {
+            bigLeftData[y] = 0;
+        }
+        if (allDeviation[y] + IMAGE_CENTER + 30 + (y - rowNum) / 2 > IMAGE_RIGHT_EDGE)
+        {
+            bigRightData[y] = getImage(allDeviation[y] + IMAGE_CENTER + 30 + (y - rowNum) / 2, y);
+        }
+        else
+        {
+            bigRightData[y] = 0;
+        }
     }
 
     for (int y = rowNum; y < rowNum + 10; y++)
