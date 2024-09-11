@@ -1792,6 +1792,10 @@ void createLineFlag(int rowNum)
     volatile int crossCountThreshold = 87;  // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
 
+    volatile int leftData = 0;
+    volatile int rightData = 0;
+    volatile int bigLeftData[IMAGE_HEIGHT];
+    volatile int bigRightData[IMAGE_HEIGHT];
     // if (pattern != 11)
     // {
     //     rowNum = 60;
@@ -1805,6 +1809,23 @@ void createLineFlag(int rowNum)
             bigImageData[x][y] = getImage(x, y);
             imageData[x] = 0;
             // imageData[x] = getImage(x, rowNum);
+        }
+    }
+    for (int y = rowNum; y < rowNum + 5; y++)
+    {
+        bigLeftData[y] = getImage(allDeviation[y] + IMAGE_CENTER - 30 - (y - rowNum) / 2, y);
+        bigRightData[y] = getImage(allDeviation[y] + IMAGE_CENTER + 30 + (y - rowNum) / 2, y);
+    }
+
+    for (int y = rowNum; y < rowNum + 10; y++)
+    {
+        if (bigLeftData[y] > leftData)
+        {
+            leftData = bigLeftData[y];
+        }
+        if (bigRightData[y] > rightData)
+        {
+            rightData = bigRightData[y];
         }
     }
     for (int y = rowNum; y < rowNum + 10; y++)
@@ -1832,7 +1853,15 @@ void createLineFlag(int rowNum)
     }
 
     // leftCountがcrossCountThresholdの半分(レフトラインの判定基準)より多く判定されたらフラグtrue
-    if (leftCount > crossCountThreshold / 2)
+    // if (leftCount > crossCountThreshold / 2)
+    // {
+    //     lineflag_left = true;
+    // }
+    // else
+    // {
+    //     lineflag_left = false;
+    // }
+    if (leftData > brightnessThreshold)
     {
         lineflag_left = true;
     }
@@ -1852,7 +1881,16 @@ void createLineFlag(int rowNum)
         }
     }
 
-    if (rightCount > crossCountThreshold / 2)
+    // if (rightCount > crossCountThreshold / 2)
+    // {
+    //     lineflag_right = true;
+    // }
+    // else
+    // {
+    //     lineflag_right = false;
+    // }
+
+    if (rightData > brightnessThreshold)
     {
         lineflag_right = true;
     }
