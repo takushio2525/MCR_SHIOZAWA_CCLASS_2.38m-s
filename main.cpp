@@ -2135,7 +2135,7 @@ void createHandleVal(void)
     float middleCurveGain = 0.84;
     float bigCurveCurveGain = 0.78;
 
-    float middleEncoderGain = 0.65;
+    float middleEncoderGain = 0.7;
     float bigEncoderGain = 0.7;
 
     float middleConstEncoderGain = 28;
