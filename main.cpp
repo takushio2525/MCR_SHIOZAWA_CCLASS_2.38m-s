@@ -1967,6 +1967,7 @@ void createDeviation(void)
     volatile signed int rightCenterCount[IMAGE_HEIGHT]; // 右側の差分が検出された場所の何個目がセンターラインかを示す
     volatile signed int leftCenterCount[IMAGE_HEIGHT];  // 左側の差分が検出された場所の何個目がセンターラインかを示す
 
+    volatile static signed int beforDeviationThreshold = 20;
     // 変数の初期化
     for (int y = 0; y < IMAGE_HEIGHT; y++)
     {
@@ -2101,7 +2102,10 @@ void createDeviation(void)
         leftDeviation[y] = IMAGE_CENTER - leftExceedingXPositions[y][leftCenterCount[y]];
         rightDeviation[y] = IMAGE_CENTER - rightExceedingXPositions[y][rightCenterCount[y]];
         // allDeviation[y] = leftDeviation[y] + rightDeviation[y];
-        allDeviation[y] = IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2;
+        if (abs(allDeviation[y] - (IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2)) < beforDeviationThreshold)
+        {
+            allDeviation[y] = IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2;
+        }
     }
 }
 
