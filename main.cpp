@@ -256,6 +256,7 @@ volatile int crankDistance;
 volatile int laneDistance;
 volatile int laneAfterDistance;
 volatile int laneCounterDistance;
+volatile bool resetFlag = true;
 
 typedef struct
 {
@@ -1081,9 +1082,9 @@ void intTimer(void)
     case 11:
         // 通常トレース
         led_m(50, 1, 1, 1);
-        if (abs(allDeviation[60]) < 20 && encoder.getTotalCount() >= 600)
+        if (abs(allDeviation[60]) < 15 && encoder.getTotalCount() >= 600)
         {
-            lineSkipDistance = 200;
+            lineSkipDistance = 170;
 
             laneAfterDistance = 50;
             laneCounterDistance = 350; // 300
@@ -1093,10 +1094,10 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 40;
+                crankHandleVal = 41;
 
                 crankMotorPowerOUT = 100;
-                crankMotorPowerIN = 70;
+                crankMotorPowerIN = -60;
             }
             if (lineflag_right)
             {
@@ -1118,13 +1119,13 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 400;
 
-                laneHandleVal = 34;
-                laneMotorPowerLeft = 90;
+                laneHandleVal = 22;
+                laneMotorPowerLeft = -20;
                 laneMotorPowerRight = 90;
 
-                laneCounterHandleVal = -28;
-                laneCounterMotorPowerLeft = 70;
-                laneCounterMotorPowerRight = 40;
+                laneCounterHandleVal = -30;
+                laneCounterMotorPowerLeft = 90;
+                laneCounterMotorPowerRight = 90;
             }
         }
 
@@ -1148,11 +1149,11 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(30);
+        createBrakeMotorVal(40);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
-        if (encoder.getTotalCount() >= lineSkipDistance /* && !lineflag_cross*/)
+        if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right)
         {
             pattern = 23;
             cnt1 = 0;
@@ -1166,12 +1167,14 @@ void intTimer(void)
         if (lineflag_left)
         {
 
-            // 左クランクと判断
-            led_m(100, 0, 1, 0);
-            handle(crankHandleVal);
-            motor(crankMotorPowerIN, crankMotorPowerOUT);
-            pattern = 31;
+            // 左クランクと判断]
             encoder.clear();
+
+            led_m(100, 0, 1, 0);
+            handle(crankHandleVal + 4);
+            motor(crankMotorPowerIN - 10, crankMotorPowerOUT);
+            pattern = 31;
+            encoder.update();
 
             break;
         }
@@ -1179,15 +1182,16 @@ void intTimer(void)
         {
 
             // 右クランクと判断
+            encoder.clear();
+
             led_m(100, 0, 0, 1);
             handle(-crankHandleVal);
             motor(crankMotorPowerOUT, crankMotorPowerIN);
             pattern = 41;
-            encoder.clear();
 
             break;
         }
-        createBrakeMotorVal(30);
+        createBrakeMotorVal(40);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1195,7 +1199,7 @@ void intTimer(void)
 
     case 31:
         // 左クランククリア処理　安定するまで少し待つ
-        handle(crankHandleVal + 7);
+        handle(crankHandleVal + 4);
         motor(crankMotorPowerIN - 20, crankMotorPowerOUT);
 
         led_m(100, 0, 1, 0);
@@ -1203,6 +1207,7 @@ void intTimer(void)
         {
             pattern = 11;
             encoder.clear();
+            resetFlag = true;
         }
         break;
     case 41:
@@ -1215,6 +1220,7 @@ void intTimer(void)
         {
             pattern = 11;
             encoder.clear();
+            resetFlag = true;
         }
         break;
 
@@ -1228,21 +1234,21 @@ void intTimer(void)
 
     case 52:
         // ハーフラインを読み飛ばす
-        createBrakeMotorVal(30);
+        createBrakeMotorVal(45);
 
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
-        if (encoder.getTotalCount() >= lineSkipDistance /* && !lineflag_cross && !lineflag_left && !lineflag_right*/)
+        if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right)
         {
             pattern = 53;
             encoder.clear();
         }
-        if (laneHandleVal < 0 && lineflag_left)
+        if (laneHandleVal < 0 && (lineflag_left || lineflag_cross))
         {
             pattern = 21;
             break;
         }
-        if (laneHandleVal > 0 && lineflag_right)
+        if (laneHandleVal > 0 && (lineflag_right || lineflag_cross))
         {
             pattern = 21;
             break;
@@ -1266,7 +1272,7 @@ void intTimer(void)
             encoder.clear();
             break;
         }
-        createBrakeMotorVal(30);
+        createBrakeMotorVal(45);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
@@ -1322,6 +1328,7 @@ void intTimer(void)
             pattern = 11;
             led_m(100, 0, 0, 1);
             encoder.clear();
+            resetFlag = true;
         }
         break;
 
@@ -1920,7 +1927,7 @@ void createDeviation(void)
     volatile signed int rightCenterCount[IMAGE_HEIGHT]; // 右側の差分が検出された場所の何個目がセンターラインかを示す
     volatile signed int leftCenterCount[IMAGE_HEIGHT];  // 左側の差分が検出された場所の何個目がセンターラインかを示す
 
-    volatile static signed int beforDeviationThreshold = 20;
+    volatile static signed int beforDeviationThreshold = 45;
     // 変数の初期化
     for (int y = 0; y < IMAGE_HEIGHT; y++)
     {
@@ -2054,10 +2061,15 @@ void createDeviation(void)
     {
         leftDeviation[y] = IMAGE_CENTER - leftExceedingXPositions[y][leftCenterCount[y]];
         rightDeviation[y] = IMAGE_CENTER - rightExceedingXPositions[y][rightCenterCount[y]];
-        // allDeviation[y] = leftDeviation[y] + rightDeviation[y];
+        allDeviation[y] = leftDeviation[y] + rightDeviation[y];
         // if (abs(allDeviation[y] - (IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2)) < beforDeviationThreshold)
         // {
         allDeviation[y] = IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2;
+        // }
+        // if (resetFlag == true)
+        // {
+        //     resetFlag = false;
+        //     allDeviation[y] = IMAGE_CENTER - (leftExceedingXPositions[y][leftCenterCount[y]] + rightExceedingXPositions[y][rightCenterCount[y]]) / 2;
         // }
     }
 }
@@ -2095,18 +2107,18 @@ void createMotorVal(void)
 
 void createBrakeMotorVal(int targetSpeed)
 {
-    volatile signed int largeSpeedThreshold = 15;
+    volatile signed int largeSpeedThreshold = 10;
     volatile signed int mediumSpeedThreshold = 3;
-    volatile signed int neutralThrottle = 40;
-    volatile signed int acceleratedThrottle = 80;
+    volatile signed int neutralThrottle = 80;
+    volatile signed int acceleratedThrottle = 100;
 
     float encoderBrakeGain = 7;
     volatile signed int deviationTargetSpeed = encoder.getCnt() - targetSpeed;
 
     if (encoder.getCnt() >= targetSpeed + largeSpeedThreshold)
     {
-        leftBrakeMotor = -70;
-        rightBrakeMotor = -70;
+        leftBrakeMotor = -100;
+        rightBrakeMotor = -100;
     }
     else if (encoder.getCnt() >= targetSpeed + mediumSpeedThreshold)
     {

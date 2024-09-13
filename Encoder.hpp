@@ -14,25 +14,25 @@
 class Encoder
 {
 private:
-    long long _total_cnt;
-    long long _cnt;
-    long long _cnt_kyori;
-    long long _cnt_kyorikousinn;
-    long long _cnt_kyorikousinnmae;
-    long long _course_cnt;
+    volatile long long _total_cnt;
+    volatile long long _cnt;
+    volatile long long _cnt_kyori;
+    volatile long long _cnt_kyorikousinn;
+    volatile long long _cnt_kyorikousinnmae;
+    volatile long long _course_cnt;
 
-    long long _cnt1;
-    long long _cntmaga = 0;
+    volatile long long _cnt1;
+    volatile long long _cntmaga = 0;
 
-    long long cntave;
-    long long cntgoukei;
-    long long cntdata[4];
+    volatile long long cntave;
+    volatile long long cntgoukei;
+    volatile long long cntdata[4];
 
-    float _rc;
-    float _avg;
-    float _a;
-    int _filter_value[Filter_N];
-    int _filter_cnt;
+    volatile float _rc;
+    volatile float _avg;
+    volatile float _a;
+    volatile int _filter_value[Filter_N];
+    volatile int _filter_cnt;
 
 public:
     Encoder();
@@ -44,7 +44,7 @@ public:
     void clearkura(void); // 全カウントクリア
 
     int getTotalCount(void); // トータルカウント取得
-    int getMagaCount(void); // クランクカウント取得
+    int getMagaCount(void);  // クランクカウント取得
     int getCourseCount(void);
     void setmaga(int value);
 
