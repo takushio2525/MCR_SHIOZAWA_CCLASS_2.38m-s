@@ -32,7 +32,7 @@
     33332 // SERVO PWM period
           // 16ms   P0φ/16 = 0.48us
 #define SERVO_CENTER \
-    3040 // 3070        // 1.5ms / 0.48us - 1 = 3124   最初３０５０
+    3110 // 3070        // 1.5ms / 0.48us - 1 = 3124   最初３０５０
 // 値を足すと右　減らすと左
 // 3100
 #define HANDLE_STEP 18 // 1 degree value
@@ -1094,9 +1094,9 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 40;
+                crankHandleVal = 47;
 
-                crankMotorPowerOUT = 100;
+                crankMotorPowerOUT = 60;
                 crankMotorPowerIN = 30;
             }
             if (lineflag_right)
@@ -1117,10 +1117,10 @@ void intTimer(void)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 400;
+                laneDistance = 430;
 
-                laneHandleVal = 20;
-                laneMotorPowerLeft = 30;
+                laneHandleVal = 23;
+                laneMotorPowerLeft = 70;
                 laneMotorPowerRight = 90;
 
                 laneCounterHandleVal = -28;
@@ -1245,17 +1245,17 @@ void intTimer(void)
         }
         if (laneHandleVal < 0 && (lineflag_left || lineflag_cross))
         {
-            pattern = 21;
+            pattern = 22;
             break;
         }
         if (laneHandleVal > 0 && (lineflag_right || lineflag_cross))
         {
-            pattern = 21;
+            pattern = 22;
             break;
         }
         if (lineflag_cross == 1)
         {
-            pattern = 21;
+            pattern = 22;
             break;
         }
         break;
@@ -1780,7 +1780,7 @@ char getImage(int ix, int iy)
 
 void createLineFlag(int rowNum)
 {
-    volatile int crosslineWidth = 90; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
+    volatile int crosslineWidth = 120; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
     volatile int centerWidth = 60;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
     volatile int centerRowNum = 50; // ラインを検出する行数
@@ -1796,7 +1796,7 @@ void createLineFlag(int rowNum)
     volatile int rightCount = 0;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
     volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
-    volatile int crossCountThreshold = 87;  // 画像のクロスラインのカウント数の閾値
+    volatile int crossCountThreshold = 110;  // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
 
     // if (pattern != 11)
@@ -2172,9 +2172,9 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.5;
-    float middleCurveGain = 0.84;
-    float bigCurveCurveGain = 0.78;
+    float straightCurveGain = 0.3;
+    float middleCurveGain = 0.6;
+    float bigCurveCurveGain = 0.6;
 
     float middleEncoderGain = 0.7;
     float bigEncoderGain = 0.7;
@@ -2186,9 +2186,9 @@ void createHandleVal(void)
     volatile signed int middleCurveDeviation = 13;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 40;
-    volatile signed int midTraceLine = 40;
-    volatile signed int nearTraceLine = 45;
+    volatile signed int farTraceLine = 44;
+    volatile signed int midTraceLine = 44;
+    volatile signed int nearTraceLine = 50;
 
     float midDifferenceGain = 0.2;
     float bigDifferenceGain = 0.7;
