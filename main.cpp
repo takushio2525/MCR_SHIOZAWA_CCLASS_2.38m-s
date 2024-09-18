@@ -1094,10 +1094,10 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 50;
+                crankHandleVal = 40;
 
-                crankMotorPowerOUT = 80;
-                crankMotorPowerIN = -100;
+                crankMotorPowerOUT = 60;
+                crankMotorPowerIN = -60;
             }
             if (lineflag_right)
             {
@@ -1119,9 +1119,9 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 390;
 
-                laneHandleVal = 20;
-                laneMotorPowerLeft = -10;
-                laneMotorPowerRight = 80;
+                laneHandleVal = 29;
+                laneMotorPowerLeft = 60;
+                laneMotorPowerRight = 60;
 
                 laneCounterHandleVal = -30;
                 laneCounterMotorPowerLeft = 70;
@@ -1149,7 +1149,7 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(4405);
+        createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1190,7 +1190,7 @@ void intTimer(void)
 
             break;
         }
-        createBrakeMotorVal(40);
+        createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1233,7 +1233,7 @@ void intTimer(void)
 
     case 52:
         // ハーフラインを読み飛ばす
-        createBrakeMotorVal(40);
+        createBrakeMotorVal(34);
 
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
@@ -1271,7 +1271,7 @@ void intTimer(void)
             encoder.clear();
             break;
         }
-        createBrakeMotorVal(40);
+        createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
@@ -2140,7 +2140,7 @@ void createBrakeMotorVal(int targetSpeed)
     volatile signed int neutralThrottle = 80;
     volatile signed int acceleratedThrottle = 100;
 
-    float encoderBrakeGain = 9;
+    float encoderBrakeGain = 7;
     volatile signed int deviationTargetSpeed = encoder.getCnt() - targetSpeed;
 
     if (encoder.getCnt() >= targetSpeed + largeSpeedThreshold)
@@ -2173,7 +2173,7 @@ void createHandleVal(void)
 
     float straightCurveGain = 0.3;
     float middleCurveGain = 0.6;
-    float bigCurveCurveGain = 0.6;
+    float bigCurveCurveGain = 0.7;
 
     float middleEncoderGain = 0.7;
     float bigEncoderGain = 0.7;
@@ -2189,7 +2189,7 @@ void createHandleVal(void)
     volatile signed int midTraceLine = 44;
     volatile signed int nearTraceLine = 50;
 
-    float midDifferenceGain = 0.2;
+    float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
 
     volatile signed int traceLine;
