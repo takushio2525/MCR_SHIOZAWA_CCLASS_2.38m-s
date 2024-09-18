@@ -912,7 +912,7 @@ void intTimer(void)
         // }
         // else
         // {
-        createLineFlag(40); // ラインを検出する行数)
+        createLineFlag(35); // ラインを検出する行数)
                             // }
         createHandleVal();
 
@@ -1094,10 +1094,10 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 40;
+                crankHandleVal = 48;
 
                 crankMotorPowerOUT = 60;
-                crankMotorPowerIN = -60;
+                crankMotorPowerIN = -100;
             }
             if (lineflag_right)
             {
@@ -1117,11 +1117,11 @@ void intTimer(void)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 390;
+                laneDistance = 420;
 
-                laneHandleVal = 29;
-                laneMotorPowerLeft = 60;
-                laneMotorPowerRight = 60;
+                laneHandleVal = 24;
+                laneMotorPowerLeft = 30;
+                laneMotorPowerRight = 90;
 
                 laneCounterHandleVal = -30;
                 laneCounterMotorPowerLeft = 70;
@@ -1149,7 +1149,7 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(40);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1190,7 +1190,7 @@ void intTimer(void)
 
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(40);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1233,7 +1233,7 @@ void intTimer(void)
 
     case 52:
         // ハーフラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(40);
 
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
@@ -1271,7 +1271,7 @@ void intTimer(void)
             encoder.clear();
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(40);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
@@ -2111,12 +2111,12 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 3;
+    volatile signed int accelerationBrakeGain = 1;
     volatile signed int targetSpeed = 60;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
 
-    volatile signed int limitAcceleration = 3;
+    volatile signed int limitAcceleration = 4;
     leftMotor = MAX_MOTOR_POWER - encoderAcceleration * accelerationBrakeGain;
     rightMotor = MAX_MOTOR_POWER - encoderAcceleration * accelerationBrakeGain;
 
@@ -2171,8 +2171,8 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.3;
-    float middleCurveGain = 0.6;
+    float straightCurveGain = 0.37;
+    float middleCurveGain = 0.7;
     float bigCurveCurveGain = 0.7;
 
     float middleEncoderGain = 0.7;
@@ -2182,12 +2182,12 @@ void createHandleVal(void)
     float bigConstEncoderGain = 25;
 
     volatile signed int straightDeviation = 0;
-    volatile signed int middleCurveDeviation = 13;
+    volatile signed int middleCurveDeviation = 9;
     volatile signed int bigCurveDeviation = 100;
 
     volatile signed int farTraceLine = 40;
-    volatile signed int midTraceLine = 44;
-    volatile signed int nearTraceLine = 50;
+    volatile signed int midTraceLine = 40;
+    volatile signed int nearTraceLine = 40;
 
     float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
