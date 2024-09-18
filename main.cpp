@@ -1094,10 +1094,10 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 40;
+                crankHandleVal = 50;
 
-                crankMotorPowerOUT = 60;
-                crankMotorPowerIN = -60;
+                crankMotorPowerOUT = 80;
+                crankMotorPowerIN = -100;
             }
             if (lineflag_right)
             {
@@ -1119,9 +1119,9 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 390;
 
-                laneHandleVal = 29;
-                laneMotorPowerLeft = 60;
-                laneMotorPowerRight = 60;
+                laneHandleVal = 20;
+                laneMotorPowerLeft = -10;
+                laneMotorPowerRight = 80;
 
                 laneCounterHandleVal = -30;
                 laneCounterMotorPowerLeft = 70;
@@ -1149,7 +1149,7 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(4405);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1190,7 +1190,7 @@ void intTimer(void)
 
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(40);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1233,7 +1233,7 @@ void intTimer(void)
 
     case 52:
         // ハーフラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(40);
 
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
@@ -1271,7 +1271,7 @@ void intTimer(void)
             encoder.clear();
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(40);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
@@ -1780,7 +1780,7 @@ char getImage(int ix, int iy)
 void createLineFlag(int rowNum)
 {
     volatile int crosslineWidth = 90; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
-    volatile int centerWidth = 60;     // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int centerWidth = 60;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
     volatile int centerRowNum = 50; // ラインを検出する行数
 
@@ -1795,7 +1795,7 @@ void createLineFlag(int rowNum)
     volatile int rightCount = 0;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
     volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
-    volatile int crossCountThreshold = 89; // 画像のクロスラインのカウント数の閾値
+    volatile int crossCountThreshold = 89;  // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
 
     // if (pattern != 11)
@@ -2140,7 +2140,7 @@ void createBrakeMotorVal(int targetSpeed)
     volatile signed int neutralThrottle = 80;
     volatile signed int acceleratedThrottle = 100;
 
-    float encoderBrakeGain = 7;
+    float encoderBrakeGain = 9;
     volatile signed int deviationTargetSpeed = encoder.getCnt() - targetSpeed;
 
     if (encoder.getCnt() >= targetSpeed + largeSpeedThreshold)
@@ -2172,8 +2172,8 @@ void createHandleVal(void)
     volatile signed int limitSpeed = 45;
 
     float straightCurveGain = 0.3;
-    float middleCurveGain = 0.7;
-    float bigCurveCurveGain = 0.7;
+    float middleCurveGain = 0.6;
+    float bigCurveCurveGain = 0.6;
 
     float middleEncoderGain = 0.7;
     float bigEncoderGain = 0.7;
@@ -2186,7 +2186,7 @@ void createHandleVal(void)
     volatile signed int bigCurveDeviation = 100;
 
     volatile signed int farTraceLine = 40;
-    volatile signed int midTraceLine = 47;
+    volatile signed int midTraceLine = 44;
     volatile signed int nearTraceLine = 50;
 
     float midDifferenceGain = 0.2;
