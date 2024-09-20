@@ -32,7 +32,7 @@
     33332 // SERVO PWM period
           // 16ms   P0φ/16 = 0.48us
 #define SERVO_CENTER \
-    3110 // 3070        // 1.5ms / 0.48us - 1 = 3124   最初３０５０
+    3090 // 3070        // 1.5ms / 0.48us - 1 = 3124   最初３０５０
 // 値を足すと右　減らすと左
 // 3100
 #define HANDLE_STEP 18 // 1 degree value
@@ -931,7 +931,7 @@ void intTimer(void)
             log_data[log_no].pattern = pattern;
             log_data[log_no].convertBCD = deviationDifference;
             log_data[log_no].handle = msd_handle;
-            log_data[log_no].hennsa = allDeviation[60]; // 偏差を検出するプログラムを作ったら追加
+            log_data[log_no].hennsa = allDeviation[47]; // 偏差を検出するプログラムを作ったら追加
             log_data[log_no].encoder = encoder.getCnt();
             log_data[log_no].motorL = msd_l /*getImage(-allDeviation[60] + IMAGE_CENTER - 35, 60)*/;
             log_data[log_no].motorR = msd_r;
@@ -944,7 +944,7 @@ void intTimer(void)
             log_data[log_no].total = encoder.getTotalCount();
             for (int i = 0; i < 160; i++)
             {
-                log_data[log_no].imageData0[i] = getImage(i, 60);
+                log_data[log_no].imageData0[i] = getImage(i, 47);
             }
 
             log_no++;
@@ -1097,27 +1097,27 @@ void intTimer(void)
                 crankHandleVal = 40;
 
                 crankMotorPowerOUT = 60;
-                crankMotorPowerIN = -60;
+                crankMotorPowerIN = -30;
             }
             if (lineflag_right)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 400;
+                laneDistance = 350;
 
-                laneHandleVal = -28;
+                laneHandleVal = -27;
                 laneMotorPowerLeft = 60;
-                laneMotorPowerRight = 0;
+                laneMotorPowerRight = 60;
 
-                laneCounterHandleVal = 25;
-                laneCounterMotorPowerLeft = 20;
-                laneCounterMotorPowerRight = 90;
+                laneCounterHandleVal = 27;
+                laneCounterMotorPowerLeft = 30;
+                laneCounterMotorPowerRight = 70;
             }
             if (lineflag_left)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 390;
+                laneDistance = 350;
 
                 laneHandleVal = 29;
                 laneMotorPowerLeft = 60;
@@ -1132,7 +1132,7 @@ void intTimer(void)
         motor(leftMotor, rightMotor);
         handle(handleVal);
 
-        if (encoder.getCourseCount() >= 1120 * 54)
+        if (encoder.getCourseCount() >= 1120 * 60)
         {
             pattern = 101;
             cnt1 = 0;
@@ -1151,7 +1151,7 @@ void intTimer(void)
         // クロスラインを読み飛ばす
         createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
-        handle(handleVal);
+        handle(0);
 
         if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right)
         {
@@ -1236,7 +1236,7 @@ void intTimer(void)
         createBrakeMotorVal(34);
 
         motor(leftBrakeMotor, rightBrakeMotor);
-        handle(handleVal);
+        handle(0);
         if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right)
         {
             pattern = 53;
@@ -1780,9 +1780,9 @@ char getImage(int ix, int iy)
 void createLineFlag(int rowNum)
 {
     volatile int crosslineWidth = 90; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
-    volatile int centerWidth = 60;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int centerWidth = 100;   // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
-    volatile int centerRowNum = 40; // ラインを検出する行数
+    volatile int centerRowNum = 50; // ラインを検出する行数
 
     volatile int brightnessThreshold = 0; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
     volatile int maxBrightness = 0;
@@ -1795,8 +1795,8 @@ void createLineFlag(int rowNum)
     volatile int rightCount = 0;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
     volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
-    volatile int crossCountThreshold = 80; // 画像のクロスラインのカウント数の閾値
-    volatile int centerCountThreshold = 8; // 画像のセンターラインのカウント数の閾値
+    volatile int crossCountThreshold = 89; // 画像のクロスラインのカウント数の閾値
+    volatile int centerCountThreshold = 5; // 画像のセンターラインのカウント数の閾値
 
     // if (pattern != 11)
     // {
@@ -1804,7 +1804,7 @@ void createLineFlag(int rowNum)
     // }
 
     // imageDataに画像データを格納する
-    for (int y = rowNum; y < rowNum + 7; y++)
+    for (int y = rowNum; y < rowNum + 10; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
         {
@@ -1818,7 +1818,7 @@ void createLineFlag(int rowNum)
         }
     }
     brightnessThreshold = maxBrightness * 0.8;
-    for (int y = rowNum; y < rowNum + 7; y++)
+    for (int y = rowNum; y < rowNum + 10; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
         {
@@ -1903,9 +1903,9 @@ void createLineFlag(int rowNum)
 // 偏差を作る関数
 void createDeviation(void)
 {
-    volatile float brightnessThreshold = 0.7;    // 明るさの閾値倍率
-    volatile int minasDifferenceThreshold = -12; // 左側差分検出の閾値
-    volatile int plusDifferenceThreshold = 7;    // 右側差分検出の閾値
+    volatile float brightnessThreshold = 0.87;   // 明るさの閾値倍率
+    volatile int minasDifferenceThreshold = -17; // 左側差分検出の閾値
+    volatile int plusDifferenceThreshold = 17;   // 右側差分検出の閾値
 
     volatile int differenceThresholdY = 10; // 一行下との検出された場所による外れ値検出の閾値
 
@@ -2111,7 +2111,7 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 0;
+    volatile signed int accelerationBrakeGain = 5;
     volatile signed int targetSpeed = 60;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
@@ -2171,23 +2171,23 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.3;
-    float middleCurveGain = 0.7;
-    float bigCurveCurveGain = 0.6;
+    float straightCurveGain = 0.45;
+    float middleCurveGain = 0.73;
+    float bigCurveCurveGain = 0.73;
 
     float middleEncoderGain = 0.7;
-    float bigEncoderGain = 0.7;
+    float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 30;
-    float bigConstEncoderGain = 28;
+    float middleConstEncoderGain = 26;
+    float bigConstEncoderGain = 25;
 
     volatile signed int straightDeviation = 0;
-    volatile signed int middleCurveDeviation = 13;
+    volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 44;
-    volatile signed int midTraceLine = 44;
-    volatile signed int nearTraceLine = 50;
+    volatile signed int farTraceLine = 40;
+    volatile signed int midTraceLine = 40;
+    volatile signed int nearTraceLine = 40;
 
     float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
