@@ -1094,24 +1094,24 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 42;
+                crankHandleVal = 45;
 
-                crankMotorPowerOUT = 80;
+                crankMotorPowerOUT = 30;
                 crankMotorPowerIN = -60;
             }
             if (lineflag_right)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 350;
+                laneDistance = 330;
 
-                laneHandleVal = -27;
-                laneMotorPowerLeft = 60;
-                laneMotorPowerRight = 60;
+                laneHandleVal = -29;
+                laneMotorPowerLeft = 90;
+                laneMotorPowerRight = -50;
 
-                laneCounterHandleVal = 27;
-                laneCounterMotorPowerLeft = 30;
-                laneCounterMotorPowerRight = 70;
+                laneCounterHandleVal = 28;
+                laneCounterMotorPowerLeft = 70;
+                laneCounterMotorPowerRight = 90;
             }
             if (lineflag_left)
             {
@@ -1119,13 +1119,13 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 330;
 
-                laneHandleVal = 29;
-                laneMotorPowerLeft = 60;
-                laneMotorPowerRight = 60;
+                laneHandleVal = 26;
+                laneMotorPowerLeft = -50;
+                laneMotorPowerRight = 90;
 
-                laneCounterHandleVal = -30;
-                laneCounterMotorPowerLeft = 70;
-                laneCounterMotorPowerRight = 40;
+                laneCounterHandleVal = -28;
+                laneCounterMotorPowerLeft = 90;
+                laneCounterMotorPowerRight = 70;
             }
         }
 
@@ -1149,7 +1149,7 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(43);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(0);
 
@@ -1190,7 +1190,7 @@ void intTimer(void)
 
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(43);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1244,7 +1244,7 @@ void intTimer(void)
 
     case 52:
         // ハーフラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(43);
 
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(0);
@@ -1282,7 +1282,7 @@ void intTimer(void)
             encoder.clear();
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(43);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
