@@ -1094,10 +1094,10 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 40;
+                crankHandleVal = 42;
 
-                crankMotorPowerOUT = 60;
-                crankMotorPowerIN = -30;
+                crankMotorPowerOUT = 80;
+                crankMotorPowerIN = -60;
             }
             if (lineflag_right)
             {
@@ -1117,7 +1117,7 @@ void intTimer(void)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 350;
+                laneDistance = 330;
 
                 laneHandleVal = 29;
                 laneMotorPowerLeft = 60;
@@ -1174,7 +1174,7 @@ void intTimer(void)
             led_m(100, 0, 1, 0);
             handle(crankHandleVal);
             motor(crankMotorPowerIN, crankMotorPowerOUT);
-            pattern = 31;
+            pattern = 30;
             break;
         }
         if (lineflag_right)
@@ -1186,13 +1186,24 @@ void intTimer(void)
             led_m(100, 0, 0, 1);
             handle(-crankHandleVal);
             motor(crankMotorPowerOUT, crankMotorPowerIN);
-            pattern = 41;
+            pattern = 40;
 
             break;
         }
         createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
+
+        break;
+
+    case 30:
+        encoder.clear();
+        pattern=31;
+
+        break;
+     case 40:
+        encoder.clear();
+        pattern=41;
 
         break;
 
@@ -1780,7 +1791,7 @@ char getImage(int ix, int iy)
 void createLineFlag(int rowNum)
 {
     volatile int crosslineWidth = 90; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
-    volatile int centerWidth = 100;   // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int centerWidth = 70;   // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
     volatile int centerRowNum = 50; // ラインを検出する行数
 
@@ -1796,7 +1807,7 @@ void createLineFlag(int rowNum)
     volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
     volatile int crossCountThreshold = 89; // 画像のクロスラインのカウント数の閾値
-    volatile int centerCountThreshold = 5; // 画像のセンターラインのカウント数の閾値
+    volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
 
     // if (pattern != 11)
     // {
@@ -2111,7 +2122,7 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 5;
+    volatile signed int accelerationBrakeGain = 6;
     volatile signed int targetSpeed = 60;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
@@ -2171,7 +2182,7 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.45;
+    float straightCurveGain = 0.4;
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
@@ -2182,7 +2193,7 @@ void createHandleVal(void)
     float bigConstEncoderGain = 25;
 
     volatile signed int straightDeviation = 0;
-    volatile signed int middleCurveDeviation = 7;
+    volatile signed int middleCurveDeviation = 4;
     volatile signed int bigCurveDeviation = 100;
 
     volatile signed int farTraceLine = 40;
