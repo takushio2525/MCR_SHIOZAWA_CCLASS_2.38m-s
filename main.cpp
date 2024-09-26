@@ -1094,24 +1094,24 @@ void intTimer(void)
                 pattern = 21;
                 crankDistance = 460;
 
-                crankHandleVal = 45;
+                crankHandleVal = 42;
 
-                crankMotorPowerOUT = 30;
+                crankMotorPowerOUT = 80;
                 crankMotorPowerIN = -60;
             }
             if (lineflag_right)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 330;
+                laneDistance = 350;
 
-                laneHandleVal = -29;
-                laneMotorPowerLeft = 90;
-                laneMotorPowerRight = -50;
+                laneHandleVal = -27;
+                laneMotorPowerLeft = 60;
+                laneMotorPowerRight = 60;
 
-                laneCounterHandleVal = 28;
-                laneCounterMotorPowerLeft = 70;
-                laneCounterMotorPowerRight = 90;
+                laneCounterHandleVal = 27;
+                laneCounterMotorPowerLeft = 30;
+                laneCounterMotorPowerRight = 70;
             }
             if (lineflag_left)
             {
@@ -1119,13 +1119,13 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 330;
 
-                laneHandleVal = 26;
-                laneMotorPowerLeft = -50;
-                laneMotorPowerRight = 90;
+                laneHandleVal = 29;
+                laneMotorPowerLeft = 60;
+                laneMotorPowerRight = 60;
 
-                laneCounterHandleVal = -28;
-                laneCounterMotorPowerLeft = 90;
-                laneCounterMotorPowerRight = 70;
+                laneCounterHandleVal = -30;
+                laneCounterMotorPowerLeft = 70;
+                laneCounterMotorPowerRight = 40;
             }
         }
 
@@ -1149,7 +1149,7 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(43);
+        createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(0);
 
@@ -1190,7 +1190,7 @@ void intTimer(void)
 
             break;
         }
-        createBrakeMotorVal(43);
+        createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1198,12 +1198,12 @@ void intTimer(void)
 
     case 30:
         encoder.clear();
-        pattern=31;
+        pattern = 31;
 
         break;
-     case 40:
+    case 40:
         encoder.clear();
-        pattern=41;
+        pattern = 41;
 
         break;
 
@@ -1244,7 +1244,7 @@ void intTimer(void)
 
     case 52:
         // ハーフラインを読み飛ばす
-        createBrakeMotorVal(43);
+        createBrakeMotorVal(34);
 
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(0);
@@ -1282,7 +1282,7 @@ void intTimer(void)
             encoder.clear();
             break;
         }
-        createBrakeMotorVal(43);
+        createBrakeMotorVal(34);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
@@ -1791,7 +1791,7 @@ char getImage(int ix, int iy)
 void createLineFlag(int rowNum)
 {
     volatile int crosslineWidth = 90; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
-    volatile int centerWidth = 70;   // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int centerWidth = 70;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
     volatile int centerRowNum = 50; // ラインを検出する行数
 
@@ -1806,7 +1806,7 @@ void createLineFlag(int rowNum)
     volatile int rightCount = 0;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
     volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
-    volatile int crossCountThreshold = 89; // 画像のクロスラインのカウント数の閾値
+    volatile int crossCountThreshold = 89;  // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
 
     // if (pattern != 11)
@@ -2122,7 +2122,7 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 6;
+    volatile signed int accelerationBrakeGain = 3;
     volatile signed int targetSpeed = 60;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
