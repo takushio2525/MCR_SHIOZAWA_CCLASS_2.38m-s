@@ -912,7 +912,7 @@ void intTimer(void)
         // }
         // else
         // {
-        createLineFlag(40); // ラインを検出する行数)
+        createLineFlag(33); // ラインを検出する行数)
                             // }
         createHandleVal();
 
@@ -1082,9 +1082,9 @@ void intTimer(void)
     case 11:
         // 通常トレース
         led_m(50, 1, 1, 1);
-        if (abs(allDeviation[35]) < 13 && abs(allDeviation[60]) < 13 && encoder.getTotalCount() >= 600)
+        if (abs(allDeviation[30]) < 15 && abs(allDeviation[60]) < 15 && encoder.getTotalCount() >= 600)
         {
-            lineSkipDistance = 170;
+            lineSkipDistance = 300;
 
             laneAfterDistance = 50;
             laneCounterDistance = 350; // 300
@@ -1092,12 +1092,12 @@ void intTimer(void)
             if (lineflag_cross)
             {
                 pattern = 21;
-                crankDistance = 460;
+                crankDistance = 440;
 
-                crankHandleVal = 42;
+                crankHandleVal = 45;
 
                 crankMotorPowerOUT = 80;
-                crankMotorPowerIN = -60;
+                crankMotorPowerIN = -90;
             }
             if (lineflag_right)
             {
@@ -1117,13 +1117,13 @@ void intTimer(void)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 330;
+                laneDistance = 340;
 
-                laneHandleVal = 29;
-                laneMotorPowerLeft = 60;
+                laneHandleVal = 26;
+                laneMotorPowerLeft = -30;
                 laneMotorPowerRight = 60;
 
-                laneCounterHandleVal = -30;
+                laneCounterHandleVal = -23;
                 laneCounterMotorPowerLeft = 70;
                 laneCounterMotorPowerRight = 40;
             }
@@ -1149,9 +1149,9 @@ void intTimer(void)
 
     case 22:
         // クロスラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(45);
         motor(leftBrakeMotor, rightBrakeMotor);
-        handle(0);
+        handle(handleVal);
 
         if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right)
         {
@@ -1190,7 +1190,7 @@ void intTimer(void)
 
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(45);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
@@ -1244,10 +1244,10 @@ void intTimer(void)
 
     case 52:
         // ハーフラインを読み飛ばす
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(45);
 
         motor(leftBrakeMotor, rightBrakeMotor);
-        handle(0);
+        handle(handleVal);
         if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right)
         {
             pattern = 53;
@@ -1282,7 +1282,7 @@ void intTimer(void)
             encoder.clear();
             break;
         }
-        createBrakeMotorVal(34);
+        createBrakeMotorVal(45);
         motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
@@ -1468,13 +1468,13 @@ void motor(int accele_l, int accele_r)
     if (accele_l >= 0)
     {
         // forward
-        Left_motor_signal = 0;
+        Left_motor_signal = 1;
         MTU2TGRC_4 = (long)(MOTOR_PWM_CYCLE - 1) * accele_l / 100;
     }
     else
     {
         // reverse
-        Left_motor_signal = 1;
+        Left_motor_signal = 0;
         MTU2TGRC_4 = (long)(MOTOR_PWM_CYCLE - 1) * (-accele_l) / 100;
     }
 
@@ -1482,13 +1482,13 @@ void motor(int accele_l, int accele_r)
     if (accele_r >= 0)
     {
         // forward
-        Right_motor_signal = 1;
+        Right_motor_signal = 0;
         MTU2TGRD_4 = (long)(MOTOR_PWM_CYCLE - 1) * accele_r / 100;
     }
     else
     {
         // reverse
-        Right_motor_signal = 0;
+        Right_motor_signal = 1;
         MTU2TGRD_4 = (long)(MOTOR_PWM_CYCLE - 1) * (-accele_r) / 100;
     }
 }
@@ -1793,7 +1793,7 @@ void createLineFlag(int rowNum)
     volatile int crosslineWidth = 90; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
     volatile int centerWidth = 70;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
-    volatile int centerRowNum = 50; // ラインを検出する行数
+    volatile int centerRowNum = 35; // ラインを検出する行数
 
     volatile int brightnessThreshold = 0; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
     volatile int maxBrightness = 0;
@@ -2122,7 +2122,7 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 3;
+    volatile signed int accelerationBrakeGain = 1;
     volatile signed int targetSpeed = 60;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
@@ -2183,22 +2183,22 @@ void createHandleVal(void)
     volatile signed int limitSpeed = 45;
 
     float straightCurveGain = 0.4;
-    float middleCurveGain = 0.73;
-    float bigCurveCurveGain = 0.73;
+    float middleCurveGain = 0.7;
+    float bigCurveCurveGain = 0.7;
 
     float middleEncoderGain = 0.7;
-    float bigEncoderGain = 0;
+    float bigEncoderGain = 0.7;
 
     float middleConstEncoderGain = 26;
     float bigConstEncoderGain = 25;
 
     volatile signed int straightDeviation = 0;
     volatile signed int middleCurveDeviation = 4;
-    volatile signed int bigCurveDeviation = 100;
+    volatile signed int bigCurveDeviation = 20;
 
-    volatile signed int farTraceLine = 40;
-    volatile signed int midTraceLine = 40;
-    volatile signed int nearTraceLine = 40;
+    volatile signed int farTraceLine = 38;
+    volatile signed int midTraceLine = 38;
+    volatile signed int nearTraceLine = 43;
 
     float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
@@ -2236,7 +2236,7 @@ void createHandleVal(void)
     {
         // if (encoder.getCnt() >= limitSpeed)
         // {
-        handleVal = allDeviation[traceLine] * straightCurveGain;
+        handleVal = allDeviation[33] * straightCurveGain;
 
         // }
         // else
