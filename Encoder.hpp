@@ -13,8 +13,8 @@
 #include "iodefine.h"
 class Encoder
 {
-private:
-    volatile long long _total_cnt;
+public:
+    volatile int _total_cnt;
     volatile long long _cnt;
     volatile long long _cnt_kyori;
     volatile long long _cnt_kyorikousinn;
