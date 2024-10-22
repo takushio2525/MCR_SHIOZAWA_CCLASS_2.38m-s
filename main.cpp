@@ -934,7 +934,7 @@ void intTimer(void)
         {
             flagLine = 40;
         }
-        flagLine = 20;
+        flagLine = 30;
         createLineFlag(flagLine); // ラインを検出する行数)
                                   // }
         createHandleVal();
@@ -969,7 +969,7 @@ void intTimer(void)
             // log_data[log_no].total = encoder.getTotalCount();
             for (int i = 0; i < 160; i++)
             {
-                log_data[log_no].imageData0[i] = getImage(i, 20);
+                log_data[log_no].imageData0[i] = getImage(i, 30);
             }
 
             log_no++;
@@ -1117,19 +1117,19 @@ void intTimer(void)
             if (lineflag_cross)
             {
                 pattern = 21;
-                crankDistance = 400;
+                crankDistance = 410;
 
                 if (encoder.getCnt() >= 40)
                 {
-                    constCrankHandleVal = 45;
+                    constCrankHandleVal = 47;
                     constCrankMotorPowerOUT = 80;
-                    constCrankMotorPowerIN = -80;
+                    constCrankMotorPowerIN = -50;
                 }
                 else if (encoder.getCnt() >= 30)
                 {
                     constCrankHandleVal = 43;
                     constCrankMotorPowerOUT = 60;
-                    constCrankMotorPowerIN = -60;
+                    constCrankMotorPowerIN = 60;
                 }
                 else
                 {
@@ -1316,17 +1316,17 @@ void intTimer(void)
         }
         if (laneHandleVal < 0 && (lineflag_left || lineflag_cross))
         {
-            pattern = 20;
+            pattern = 21;
             break;
         }
         if (laneHandleVal > 0 && (lineflag_right || lineflag_cross))
         {
-            pattern = 20;
+            pattern = 21;
             break;
         }
         if (lineflag_cross == 1)
         {
-            pattern = 20;
+            pattern = 21;
             break;
         }
         break;
@@ -1850,8 +1850,8 @@ char getImage(int ix, int iy)
 
 void createLineFlag(int rowNum)
 {
-    volatile int crosslineWidth = 80; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
-    volatile int centerWidth = 95;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int crosslineWidth = 90; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
+    volatile int centerWidth = 70;    // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
     volatile int centerRowNum = rowNum; // ラインを検出する行数
 
@@ -1866,7 +1866,7 @@ void createLineFlag(int rowNum)
     volatile int rightCount = 0;  // 画像の右側に閾値以上の値がどれくらいあるかをカウントする
     volatile int centerCount = 0; // 画像のセンターライン付近に閾値以上の値がどれくらいあるかをカウントする
 
-    volatile int crossCountThreshold = 60;  // 画像のクロスラインのカウント数の閾値
+    volatile int crossCountThreshold = 89;  // 画像のクロスラインのカウント数の閾値
     volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
 
     // if (pattern != 11)
@@ -1875,7 +1875,7 @@ void createLineFlag(int rowNum)
     // }
 
     // imageDataに画像データを格納する
-    for (int y = rowNum; y < rowNum + 1; y++)
+    for (int y = rowNum; y < rowNum + 3; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
         {
@@ -1888,10 +1888,8 @@ void createLineFlag(int rowNum)
             // imageData[x] = getImage(x, rowNum);
         }
     }
-    // brightnessThreshold = maxBrightness * 0.82;
-    brightnessThreshold = maxBrightness * 0.82;
-
-    for (int y = rowNum; y < rowNum + 1; y++)
+    brightnessThreshold = maxBrightness * 0.8;
+    for (int y = rowNum; y < rowNum + 3; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
         {
@@ -1936,7 +1934,7 @@ void createLineFlag(int rowNum)
         }
     }
 
-    if (rightCount > crossCountThreshold / 2 && maxBrightness >= 200)
+    if (rightCount > crossCountThreshold / 2)
     {
         lineflag_right = true;
     }
@@ -1946,7 +1944,7 @@ void createLineFlag(int rowNum)
     }
 
     // クロスライン判定(ライトラインとレフトラインが検出されてたらクロスライン判定)
-    if (lineflag_right == true && lineflag_left == true && maxBrightness >= 200)
+    if (lineflag_right == true && lineflag_left == true)
     {
         lineflag_cross = true;
     }
@@ -2194,7 +2192,7 @@ void createDeviation(void)
 
 void createMotorVal(void)
 {
-    volatile signed int accelerationBrakeGain = 12;
+    volatile signed int accelerationBrakeGain = 5;
     volatile signed int targetSpeed = 60;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
@@ -2223,7 +2221,7 @@ void createBrakeMotorVal(int targetSpeed)
     volatile signed int neutralThrottle = 80;
     volatile signed int acceleratedThrottle = 100;
 
-    float encoderBrakeGain = 7;
+    float encoderBrakeGain = 10;
     volatile signed int deviationTargetSpeed = encoder.getCnt() - targetSpeed;
 
     if (encoder.getCnt() >= targetSpeed + largeSpeedThreshold)
