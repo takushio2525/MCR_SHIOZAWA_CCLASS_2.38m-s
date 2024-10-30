@@ -1115,7 +1115,7 @@ void intTimer(void)
             laneCounterDistance = 300; // 300
             crankDistance = 430;
 
-            if (encoder.getCnt() <= 30)
+            if (encoder.getCnt() <= 37)
             {
                 constCrankHandleVal = 25;
                 crankHandleValGain = 0;
@@ -1129,12 +1129,12 @@ void intTimer(void)
             else
             {
                 constCrankHandleVal = 12;
-                crankHandleValGain = 1;
+                crankHandleValGain = 1.2;
 
                 constCrankMotorPowerOUT = 90;
                 crankMotorPowerOUTGain = -0.7;
 
-                constCrankMotorPowerIN = -20;
+                constCrankMotorPowerIN = -25;
                 crankMotorPowerINGain = -0.68;
             }
 
@@ -1162,7 +1162,7 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 330;
 
-                laneHandleVal = 33;
+                laneHandleVal = 35;
                 laneMotorPowerLeft = 70;
                 laneMotorPowerRight = 40;
 
@@ -2280,7 +2280,7 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.28;
+    float straightCurveGain = 0.63;
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
@@ -2336,11 +2336,11 @@ void createHandleVal(void)
         {
             handleVal = 0;
         }
-        else if (abs(allDeviation[43]) <= middleCurveDeviation)
+        else if (abs(allDeviation[traceLine]) <= middleCurveDeviation)
         {
             // if (encoder.getCnt() >= limitSpeed)
             // {
-            handleVal = allDeviation[43] * straightCurveGain;
+            handleVal = allDeviation[traceLine] * straightCurveGain;
 
             // }
             // else
