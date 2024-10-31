@@ -1129,7 +1129,7 @@ void intTimer(void)
             else
             {
                 constCrankHandleVal = 12;
-                crankHandleValGain = 1.2;
+                crankHandleValGain = 1;
 
                 constCrankMotorPowerOUT = 90;
                 crankMotorPowerOUTGain = -0.7;
@@ -1916,7 +1916,7 @@ void createLineFlag(int rowNum)
             // imageData[x] = getImage(x, rowNum);
         }
     }
-    brightnessThreshold = maxBrightness * 0.8;
+    brightnessThreshold = maxBrightness * 0.7;
     for (int y = rowNum; y < rowNum + 3; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
@@ -2006,7 +2006,7 @@ void createDeviation(void)
     volatile int minasDifferenceThreshold = -17; // 左側差分検出の閾値
     volatile int plusDifferenceThreshold = 17;   // 右側差分検出の閾値
 
-    volatile int differenceThresholdY = 5; // 一行下との検出された場所による外れ値検出の閾値
+    volatile int differenceThresholdY = 3; // 一行下との検出された場所による外れ値検出の閾値
 
     volatile signed int allImageData[IMAGE_HEIGHT][IMAGE_WIDTH]; // 画像データが格納された配列
     volatile signed int maxBrightness = 0;                       // 明るさの最大値
@@ -2280,14 +2280,14 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.63;
+    float straightCurveGain = 0.4;
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
-    float middleEncoderGain = 0.4;
+    float middleEncoderGain = 0.5;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 36;
+    float middleConstEncoderGain = 35;
     float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
