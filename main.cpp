@@ -1113,7 +1113,7 @@ void intTimer(void)
 
             laneAfterDistance = 0;
             laneCounterDistance = 300; // 300
-            crankDistance = 430;
+            crankDistance = 440;
 
             if (encoder.getCnt() <= 37)
             {
@@ -1128,14 +1128,14 @@ void intTimer(void)
             }
             else
             {
-                constCrankHandleVal = 12;
+                constCrankHandleVal = 13;
                 crankHandleValGain = 1;
 
-                constCrankMotorPowerOUT = 90;
-                crankMotorPowerOUTGain = -0.7;
+                constCrankMotorPowerOUT = 80;
+                crankMotorPowerOUTGain = -0.8;
 
-                constCrankMotorPowerIN = -25;
-                crankMotorPowerINGain = -0.68;
+                constCrankMotorPowerIN = -25;//25
+                crankMotorPowerINGain = -0.8;
             }
 
             if (lineflag_cross)
@@ -1162,9 +1162,9 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 330;
 
-                laneHandleVal = 35;
-                laneMotorPowerLeft = 70;
-                laneMotorPowerRight = 40;
+                laneHandleVal = 33;
+                laneMotorPowerLeft = 100;
+                laneMotorPowerRight = 80;
 
                 laneCounterHandleVal = -23;
                 laneCounterMotorPowerLeft = 70;
@@ -1198,7 +1198,7 @@ void intTimer(void)
     case 22:
         // クロスラインを読み飛ばす
         createBrakeMotorVal(45);
-        motor(leftMotor, rightMotor);
+        motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
         if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right && !lineflag_cross)
@@ -1258,7 +1258,7 @@ void intTimer(void)
             break;
         }
         createBrakeMotorVal(45);
-        motor(leftMotor, rightMotor);
+        motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
 
         break;
@@ -1321,7 +1321,7 @@ void intTimer(void)
         // ハーフラインを読み飛ばす
         createBrakeMotorVal(45);
 
-        motor(leftMotor, rightMotor);
+        motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         if (encoder.getTotalCount() >= lineSkipDistance && !lineflag_left && !lineflag_right)
         {
@@ -1367,7 +1367,7 @@ void intTimer(void)
             break;
         }
         createBrakeMotorVal(45);
-        motor(leftMotor, rightMotor);
+        motor(leftBrakeMotor, rightBrakeMotor);
         handle(handleVal);
         break;
 
@@ -1916,7 +1916,7 @@ void createLineFlag(int rowNum)
             // imageData[x] = getImage(x, rowNum);
         }
     }
-    brightnessThreshold = maxBrightness * 0.7;
+    brightnessThreshold = maxBrightness * 0.76;
     for (int y = rowNum; y < rowNum + 3; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
@@ -2221,7 +2221,7 @@ void createDeviation(void)
 void createMotorVal(void)
 {
     volatile signed int accelerationBrakeGain = 4;
-    volatile signed int targetSpeed = 60;
+    volatile signed int targetSpeed = 45;
     volatile signed int neutralThrottle = 60;
     volatile signed int brakeThrottle = 0;
 
@@ -2275,16 +2275,16 @@ void createBrakeMotorVal(int targetSpeed)
 }
 void createHandleVal(void)
 {
-    volatile signed int highSpeed = 50;
+    volatile signed int highSpeed = 40;
     volatile signed int middleSpeed = 40;
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.4;
+    float straightCurveGain = 0.28;
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
-    float middleEncoderGain = 0.5;
+    float middleEncoderGain = 0.4;
     float bigEncoderGain = 0;
 
     float middleConstEncoderGain = 35;
@@ -2294,9 +2294,9 @@ void createHandleVal(void)
     volatile signed int middleCurveDeviation = 10;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 50;
-    volatile signed int midTraceLine = 50;
-    volatile signed int nearTraceLine = 50;
+    volatile signed int farTraceLine = 41;
+    volatile signed int midTraceLine = 41;
+    volatile signed int nearTraceLine = 41;
 
     float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
@@ -2328,7 +2328,7 @@ void createHandleVal(void)
     if ((pattern == 21 || pattern == 51) && allDeviation[traceLine] < 20)
     {
         traceLine = 80;
-        handleVal = allDeviation[traceLine] * 0.8;
+        handleVal = allDeviation[traceLine] * 1.3;
     }
     else
     {
