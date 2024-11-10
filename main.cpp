@@ -946,8 +946,8 @@ void intTimer(void)
             flagLine=93;
         }
         lineHeight=3+abs(encoderAcceleration);
-        if(lineHeight>6){
-            lineHeight=6;
+        if(lineHeight>5){
+            lineHeight=5;
         }
         createLineFlag(flagLine,lineHeight); // ラインを検出する行数)
                                   // }
@@ -1124,7 +1124,7 @@ void intTimer(void)
     case 11:
         // 通常トレース
         led_m(50, 1, 1, 1);
-        if (abs(allDeviation[flagLine+2]) < 13&&abs(allDeviation[28]) < 15&&abs(allDeviation[60]) < 15 &&encoder.getTotalCount() >= 500)
+        if (abs(allDeviation[flagLine+2]) < 13&&abs(allDeviation[28]) < 13&&abs(allDeviation[60]) < 13 &&abs(allDeviation[90]) < 13 &&encoder.getTotalCount() >= 500)
         {
             lineSkipDistance = 300;
 
@@ -1149,10 +1149,10 @@ void intTimer(void)
                 crankHandleValGain = 0.8;
 
                 constCrankMotorPowerOUT = 100;
-                crankMotorPowerOUTGain = -0.4;
+                crankMotorPowerOUTGain = -0.2;
 
-                constCrankMotorPowerIN = -23;
-                crankMotorPowerINGain = -0.7;
+                constCrankMotorPowerIN = -18;
+                crankMotorPowerINGain = -0.5;
             }
 
             if (lineflag_cross)
@@ -1906,9 +1906,9 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth=60;
         height=10;
     }
-    volatile int centerWidth = 40+20; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int centerWidth = 35+20; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
-    volatile int centerRowNum = 40; // ラインを検出する行数
+    volatile int centerRowNum = 35; // ラインを検出する行数
 
     volatile int brightnessThreshold = 0; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
     volatile int maxBrightness = 0;
@@ -2343,8 +2343,8 @@ void createBrakeMotorVal(int targetSpeed)
 }
 void createHandleVal(void)
 {
-    volatile signed int highSpeed = 49;
-    volatile signed int middleSpeed = 45;
+    volatile signed int highSpeed = 51;
+    volatile signed int middleSpeed = 47;
 
     volatile signed int limitSpeed = 45;
 
@@ -2362,7 +2362,7 @@ void createHandleVal(void)
     volatile signed int middleCurveDeviation = 10;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 36;
+    volatile signed int farTraceLine = 38;
     volatile signed int midTraceLine = 42;
     volatile signed int nearTraceLine = 45;
 
