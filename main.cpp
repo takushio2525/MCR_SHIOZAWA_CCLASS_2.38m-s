@@ -945,10 +945,13 @@ void intTimer(void)
         if(pattern==0||pattern==1||pattern==2){
             flagLine=93;
         }
-        lineHeight=3+abs(encoderAcceleration);
-        if(lineHeight>5){
-            lineHeight=5;
+        lineHeight=abs(encoderAcceleration*3);
+        if(lineHeight>7){
+            lineHeight=7;
         }
+        if(lineHeight<3){
+            lineHeight=3;
+        }        
         createLineFlag(flagLine,lineHeight); // ラインを検出する行数)
                                   // }
         createHandleVal();
@@ -1064,7 +1067,7 @@ void intTimer(void)
         // スタートバーに到着したら
         if (lineflag_cross == 1)
         {
-            led_m(0, 0, 0, 0);
+            led_m(50, 0, 0, 1);
             cnt_msdwritetime = 0;
             pattern = 2;
             cnt1 = 0;
@@ -1083,6 +1086,8 @@ void intTimer(void)
 
         if (!lineflag_cross && !lineflag_left && !lineflag_right && cnt1 >= 1000)
         {
+            led_m(50, 0, 1, 0);
+
             pattern = 3;
         }
 
@@ -1126,7 +1131,7 @@ void intTimer(void)
         led_m(50, 1, 1, 1);
         if (abs(allDeviation[flagLine]) < 15/*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */&& encoder.getTotalCount() >= 500)
         {
-            lineSkipDistance = 300;
+            lineSkipDistance = 200;
 
             laneAfterDistance = 0;
             laneCounterDistance = 300; // 300
@@ -1145,14 +1150,14 @@ void intTimer(void)
             }
             else
             {
-                constCrankHandleVal = 10;
-                crankHandleValGain = 0.8;
+                constCrankHandleVal = 5;
+                crankHandleValGain = 0.7;
 
                 constCrankMotorPowerOUT = 100;
                 crankMotorPowerOUTGain = -0.1;
 
-                constCrankMotorPowerIN = -0;
-                crankMotorPowerINGain = -0.7;
+                constCrankMotorPowerIN = 35;
+                crankMotorPowerINGain = -0.2;
             }
 
             if (lineflag_cross)
@@ -1164,7 +1169,7 @@ void intTimer(void)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 350;
+                laneDistance = 300;
 
                 laneHandleVal = -27;
                 laneMotorPowerLeft = 60;
@@ -1179,15 +1184,15 @@ void intTimer(void)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 290;
+                laneDistance = 300;
 
-                laneHandleVal = 45;
-                laneMotorPowerLeft = 0;
-                laneMotorPowerRight = 70;
+                laneHandleVal = 47;
+                laneMotorPowerLeft = 80;
+                laneMotorPowerRight = 100;
 
-                laneCounterHandleVal = -25;
-                laneCounterMotorPowerLeft = 70;
-                laneCounterMotorPowerRight = 40;
+                laneCounterHandleVal = -40;
+                laneCounterMotorPowerLeft = 100;
+                laneCounterMotorPowerRight = 80;
 
             }
         }
@@ -1906,9 +1911,9 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth=60;
         height=10;
     }
-    volatile int centerWidth = rowNum+20; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int centerWidth = 37+20; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
-    volatile int centerRowNum = rowNum; // ラインを検出する行数
+    volatile int centerRowNum = 37; // ラインを検出する行数
 
     volatile int brightnessThreshold = 0; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
     volatile int maxBrightness = 0;
