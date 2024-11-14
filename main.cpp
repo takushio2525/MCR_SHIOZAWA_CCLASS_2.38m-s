@@ -1163,9 +1163,9 @@ void intTimer(void)
                 crankHandleValGain = 0.7;
 
                 constCrankMotorPowerOUT = 100;
-                crankMotorPowerOUTGain = -0.3;
+                crankMotorPowerOUTGain = -0.2;
 
-                constCrankMotorPowerIN = 50;
+                constCrankMotorPowerIN = 40;
                 crankMotorPowerINGain = -0.4;
 
             }
@@ -1196,7 +1196,7 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 330;
 
-                laneHandleVal = 47;
+                laneHandleVal = 45;
                 laneMotorPowerLeft = 30;
                 laneMotorPowerRight = 90;
 
@@ -2359,8 +2359,8 @@ void createBrakeMotorVal(int targetSpeed)
 }
 void createHandleVal(void)
 {
-    volatile signed int highSpeed = 49;
-    volatile signed int middleSpeed = 45;
+    volatile signed int highSpeed = 47;
+    volatile signed int middleSpeed = 43;
 
     volatile signed int limitSpeed = 45;
 
@@ -2368,19 +2368,19 @@ void createHandleVal(void)
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
-    float middleEncoderGain = 0.4;
+    float middleEncoderGain = 0.35;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 28;
+    float middleConstEncoderGain = 25;
     float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
     volatile signed int middleCurveDeviation = 10;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 36;
+    volatile signed int farTraceLine = 38;
     volatile signed int midTraceLine = 40;
-    volatile signed int nearTraceLine = 43;
+    volatile signed int nearTraceLine = 42;
 
     float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
