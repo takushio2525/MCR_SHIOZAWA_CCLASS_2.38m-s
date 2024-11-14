@@ -1150,23 +1150,26 @@ void intTimer(void)
             }
             else
             {
-                //  constCrankHandleVal = 45;
-                // crankHandleValGain = 0.0;
+             
+
+                // constCrankHandleVal = 0;
+                // crankHandleValGain = 0.7;
 
                 // constCrankMotorPowerOUT = 100;
-                // crankMotorPowerOUTGain = -0.0;
+                // crankMotorPowerOUTGain = -0.2;
 
-                // constCrankMotorPowerIN = 20;
-                // crankMotorPowerINGain = -0.0;
+                // constCrankMotorPowerIN = 50;
+                // crankMotorPowerINGain = -0.6;
 
-                constCrankHandleVal = 0;
+                constCrankHandleVal = 3;
                 crankHandleValGain = 0.7;
 
                 constCrankMotorPowerOUT = 100;
-                crankMotorPowerOUTGain = -0.2;
+                crankMotorPowerOUTGain = -0.3;
 
                 constCrankMotorPowerIN = 40;
-                crankMotorPowerINGain = -0.4;
+                crankMotorPowerINGain = -0.7;
+
 
             }
 
@@ -1196,12 +1199,12 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 330;
 
-                laneHandleVal = 45;
+                laneHandleVal = 38;
                 laneMotorPowerLeft = 30;
                 laneMotorPowerRight = 90;
 
-                laneCounterHandleVal = -40;
-                laneCounterMotorPowerLeft = 90;
+                laneCounterHandleVal = -45;
+                laneCounterMotorPowerLeft = 100;
                 laneCounterMotorPowerRight = 60;
 
             }
@@ -1923,7 +1926,7 @@ void createLineFlag(int rowNum, int height)
     }
     volatile int centerRowNum = 37; // ラインを検出する行数
 
-    volatile int centerWidth = centerRowNum+20; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
+    volatile int centerWidth = centerRowNum+25; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
 
     volatile int brightnessThreshold = 0; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
@@ -1939,7 +1942,7 @@ void createLineFlag(int rowNum, int height)
 
     volatile int crossCountThreshold = crosslineWidth-1; // 画像のクロスラインのカウント数の閾値
 
-    volatile int centerCountThreshold = 10; // 画像のセンターラインのカウント数の閾値
+    volatile int centerCountThreshold = 3; // 画像のセンターラインのカウント数の閾値
 
   
     // if (pattern != 11)
@@ -2359,7 +2362,7 @@ void createBrakeMotorVal(int targetSpeed)
 }
 void createHandleVal(void)
 {
-    volatile signed int highSpeed = 47;
+    volatile signed int highSpeed = 49;
     volatile signed int middleSpeed = 43;
 
     volatile signed int limitSpeed = 45;
@@ -2371,14 +2374,14 @@ void createHandleVal(void)
     float middleEncoderGain = 0.35;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 25;
+    float middleConstEncoderGain = 24;
     float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
     volatile signed int middleCurveDeviation = 10;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 38;
+    volatile signed int farTraceLine = 35;
     volatile signed int midTraceLine = 40;
     volatile signed int nearTraceLine = 42;
 
