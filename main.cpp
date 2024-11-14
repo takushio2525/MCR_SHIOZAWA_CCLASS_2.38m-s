@@ -1131,7 +1131,7 @@ void intTimer(void)
         led_m(50, 1, 1, 1);
         if (abs(allDeviation[flagLine]) < 15/*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */&& encoder.getTotalCount() >= 500)
         {
-            lineSkipDistance = 300;
+            lineSkipDistance = 200;
 
             laneAfterDistance = 0;
             laneCounterDistance = 300; // 300
@@ -1165,9 +1165,9 @@ void intTimer(void)
                 crankHandleValGain = 0.7;
 
                 constCrankMotorPowerOUT = 100;
-                crankMotorPowerOUTGain = -0.3;
+                crankMotorPowerOUTGain = -0.2;
 
-                constCrankMotorPowerIN = 40;
+                constCrankMotorPowerIN = 30;
                 crankMotorPowerINGain = -0.7;
 
 
@@ -2309,7 +2309,7 @@ void createMotorVal(void)
 {
     volatile signed int accelerationBrakeGain = 0;
     volatile signed int targetSpeed = 555;
-    volatile signed int neutralThrottle = 90;
+    volatile signed int neutralThrottle = 80;
     volatile signed int brakeThrottle = 0;
 
     volatile signed int limitAcceleration = 5;
@@ -2371,10 +2371,10 @@ void createHandleVal(void)
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
-    float middleEncoderGain = 0.35;
+    float middleEncoderGain = 0.3;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 24;
+    float middleConstEncoderGain = 25;
     float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
