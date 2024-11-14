@@ -1199,9 +1199,9 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 330;
 
-                laneHandleVal = 38;
-                laneMotorPowerLeft = 30;
-                laneMotorPowerRight = 90;
+                laneHandleVal = 40;
+                laneMotorPowerLeft = 0;
+                laneMotorPowerRight = 80;
 
                 laneCounterHandleVal = -45;
                 laneCounterMotorPowerLeft = 100;
