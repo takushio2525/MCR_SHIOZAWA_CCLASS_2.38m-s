@@ -925,7 +925,7 @@ void intTimer(void)
         // else
         // {
 
-        flagLine = 130 - (encoder.getCnt()*2);
+        flagLine = 180 - (encoder.getCnt()*2);
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
@@ -956,8 +956,8 @@ void intTimer(void)
 
         }
         else if (pattern==2) {
-            flagLine=60;
-            lineHeight=40;
+            flagLine=40;
+            lineHeight=65;
         }
         createLineFlag(flagLine,lineHeight); // ラインを検出する行数)
                                   // }
@@ -1087,15 +1087,16 @@ void intTimer(void)
     case 2:
         if(cnt1<=100){
         handle(allDeviation[95]*0.5);
+        motor(-10, -10);
 
         }
         else {
         handle(0);
+        motor(0, 0);
+
         }
-        handle(0);
         
 
-        motor(0, 0);
 
         if (!lineflag_cross&&cnt1 >= 1000)
         {
