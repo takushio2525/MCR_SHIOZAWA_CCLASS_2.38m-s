@@ -942,16 +942,23 @@ void intTimer(void)
         // if(encoder.getCnt()<=42){
         // flagLine = 40;
         // }
-        if(pattern==0||pattern==1||pattern==2){
-            flagLine=93;
-        }
+      
         lineHeight=abs(encoderAcceleration*3);
-        if(lineHeight>7){
-            lineHeight=7;
+        if(lineHeight>5){
+            lineHeight=5;
         }
         if(lineHeight<3){
             lineHeight=3;
         }        
+        if(pattern==0||pattern==1){
+            flagLine=90;
+            lineHeight=15;
+
+        }
+        else if (pattern==2) {
+            flagLine=60;
+            lineHeight=40;
+        }
         createLineFlag(flagLine,lineHeight); // ラインを検出する行数)
                                   // }
         createHandleVal();
@@ -1078,19 +1085,40 @@ void intTimer(void)
         break;
 
     case 2:
+        if(cnt1<=100){
+        handle(allDeviation[95]*0.5);
 
+        }
+        else {
         handle(0);
-        //handle(allDeviation[95]*0.5);
+        }
+        handle(0);
+        
 
-        motor(-10, -10);
+        motor(0, 0);
 
-        if (!lineflag_cross && !lineflag_left && !lineflag_right && cnt1 >= 1000)
+        if (!lineflag_cross&&cnt1 >= 1000)
         {
             led_m(50, 0, 1, 0);
 
             pattern = 3;
         }
+        
 
+        break;
+
+    case 2000:
+        handle(0);
+        //handle(allDeviation[95]*0.5);
+
+        motor(0, 0);
+
+        if (!lineflag_cross &&!lineflag_left &&!lineflag_right)
+        {
+            led_m(50, 0, 1, 0);
+
+            pattern = 2000;
+        }
         break;
 
     case 3:
@@ -1129,7 +1157,7 @@ void intTimer(void)
     case 11:
         // 通常トレース
         led_m(50, 1, 1, 1);
-        if (abs(allDeviation[flagLine]) < 15/*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */&& encoder.getTotalCount() >= 500)
+        if (abs(allDeviation[flagLine]) < 17/*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */&& encoder.getTotalCount() >= 500)
         {
             lineSkipDistance = 200;
 
@@ -1161,14 +1189,15 @@ void intTimer(void)
                 // constCrankMotorPowerIN = 50;
                 // crankMotorPowerINGain = -0.6;
 
-                constCrankHandleVal = 3;
+                constCrankHandleVal = 18;
                 crankHandleValGain = 0.7;
 
                 constCrankMotorPowerOUT = 100;
-                crankMotorPowerOUTGain = -0.2;
+                crankMotorPowerOUTGain = -0.1;
 
-                constCrankMotorPowerIN = 30;
+                constCrankMotorPowerIN = 40;
                 crankMotorPowerINGain = -0.7;
+
 
 
             }
@@ -1197,15 +1226,15 @@ void intTimer(void)
             {
                 pattern = 51;
                 laneStraightMotorPower = 40;
-                laneDistance = 330;
+                laneDistance = 310;
 
-                laneHandleVal = 40;
-                laneMotorPowerLeft = 0;
-                laneMotorPowerRight = 80;
+                laneHandleVal = 42;
+                laneMotorPowerLeft = -10;
+                laneMotorPowerRight = 70;
 
                 laneCounterHandleVal = -45;
                 laneCounterMotorPowerLeft = 100;
-                laneCounterMotorPowerRight = 60;
+                laneCounterMotorPowerRight = 30;
 
             }
         }
@@ -1288,12 +1317,12 @@ void intTimer(void)
             break;
         }
 
-        if (encoder._total_cnt >= 1500)
+        if (encoder._total_cnt >= 1000)
         {
             pattern = 11;
             led_m(100, 1, 1, 0);
 
-            encoder.clear();
+            //encoder.clear();
 
             break;
         }
@@ -1402,12 +1431,12 @@ void intTimer(void)
             break;
         }
 
-        if (encoder._total_cnt >= 1500)
+        if (encoder._total_cnt >= 1000)
         {
             pattern = 11;
             led_m(100, 1, 1, 0);
 
-            encoder.clear();
+            //encoder.clear();
             break;
         }
         createBrakeMotorVal(45);
@@ -1967,7 +1996,10 @@ void createLineFlag(int rowNum, int height)
     brightnessThreshold = maxBrightness * 0.7;
     //brightnessThreshold=230;
     if(pattern==1||pattern==2){
-        brightnessThreshold = maxBrightness * 0.7;
+        //brightnessThreshold = maxBrightness * 0.3;
+        brightnessThreshold=100;
+        centerWidth=60;
+        crossCountThreshold=59;
 
     }
     for (int y = rowNum; y < rowNum + height; y++)
@@ -2367,18 +2399,18 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.24;
+    float straightCurveGain = 0.3;//24
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
-    float middleEncoderGain = 0.3;
+    float middleEncoderGain = 0.27;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 25;
+    float middleConstEncoderGain = 28;
     float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
-    volatile signed int middleCurveDeviation = 10;
+    volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 100;
 
     volatile signed int farTraceLine = 35;
