@@ -1243,8 +1243,8 @@ void intTimer(void)
                 laneDistance = 340;
 
                 laneHandleVal = 50;
-                laneMotorPowerLeft = 40;
-                laneMotorPowerRight = 100;
+                laneMotorPowerLeft = 30;
+                laneMotorPowerRight = 70;
 
                 laneCounterHandleVal = -45;
                 laneCounterMotorPowerLeft = 100;
@@ -1519,7 +1519,7 @@ void intTimer(void)
     case 101:
         // 終了　ログ保存中など
         led_m(100, 0, 1, 1);
-        if (cnt1 >= 1000)
+        if (cnt1 >= 200)
         {
             handle(0);
         }
