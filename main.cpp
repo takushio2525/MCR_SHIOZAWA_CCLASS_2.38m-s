@@ -925,7 +925,7 @@ void intTimer(void)
         // else
         // {
 
-        flagLine = 120 - (encoder.getCnt()*2);
+        flagLine = 130 - (encoder.getCnt()*2);
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
@@ -1159,7 +1159,7 @@ void intTimer(void)
         led_m(50, 1, 1, 1);
         if (abs(allDeviation[flagLine]) < 17/*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */&& encoder.getTotalCount() >= 500)
         {
-            lineSkipDistance = 200;
+            lineSkipDistance = 130;
 
             laneAfterDistance = 0;
             laneCounterDistance = 300; // 300
@@ -1189,14 +1189,14 @@ void intTimer(void)
                 // constCrankMotorPowerIN = 50;
                 // crankMotorPowerINGain = -0.6;
 
-                constCrankHandleVal = 18;
-                crankHandleValGain = 0.7;
+                constCrankHandleVal = 45;
+                crankHandleValGain = 0.0;
 
-                constCrankMotorPowerOUT = 100;
-                crankMotorPowerOUTGain = -0.1;
+                constCrankMotorPowerOUT = 90;
+                crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = 40;
-                crankMotorPowerINGain = -0.7;
+                constCrankMotorPowerIN = -50;
+                crankMotorPowerINGain = -0.0;
 
 
 
@@ -1228,8 +1228,8 @@ void intTimer(void)
                 laneStraightMotorPower = 40;
                 laneDistance = 310;
 
-                laneHandleVal = 42;
-                laneMotorPowerLeft = -10;
+                laneHandleVal = 45;
+                laneMotorPowerLeft = -40;
                 laneMotorPowerRight = 70;
 
                 laneCounterHandleVal = -45;
@@ -1996,12 +1996,15 @@ void createLineFlag(int rowNum, int height)
     brightnessThreshold = maxBrightness * 0.7;
     //brightnessThreshold=230;
     if(pattern==1||pattern==2){
-        //brightnessThreshold = maxBrightness * 0.3;
-        brightnessThreshold=100;
-        centerWidth=60;
+        //brightnessThreshold = maxBrightness * 0.4;
+        brightnessThreshold=90;
+        centerWidth=100;
         crossCountThreshold=59;
 
     }
+    //else if(pattern!=11){
+    //     centerWidth=100;
+    //     crossCountThreshold=99;    }
     for (int y = rowNum; y < rowNum + height; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
