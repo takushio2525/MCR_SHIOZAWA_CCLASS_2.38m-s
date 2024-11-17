@@ -937,7 +937,7 @@ void intTimer(void)
             }
         }
 
-        flagLine = 130 - (encoder.getCnt()*2);
+        flagLine = 123 - (encoder.getCnt()*2);
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
@@ -1171,7 +1171,7 @@ void intTimer(void)
         led_m(50, 1, 1, 1);
         if (abs(allDeviation[flagLine]) < 15/*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */&& encoder.getTotalCount() >= 500)
         {
-            lineSkipDistance = 200;
+            lineSkipDistance = 70;
 
             laneAfterDistance = 0;
             laneCounterDistance = 300; // 300
@@ -1202,13 +1202,13 @@ void intTimer(void)
                 // crankMotorPowerINGain = -0.0;
                 //
 
-                constCrankHandleVal = 46;
+                constCrankHandleVal = 37;
                 crankHandleValGain = 0.0;
 
-                constCrankMotorPowerOUT = 90;
+                constCrankMotorPowerOUT = 100;
                 crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = -70;
+                constCrankMotorPowerIN = 50;
                 crankMotorPowerINGain = -0.0;
 
 
@@ -1242,13 +1242,13 @@ void intTimer(void)
                 //GOD
                 laneDistance = 340;
 
-                laneHandleVal = 50;
-                laneMotorPowerLeft = 30;
-                laneMotorPowerRight = 70;
+                laneHandleVal = 47;
+                laneMotorPowerLeft = 0;
+                laneMotorPowerRight = 100;
 
                 laneCounterHandleVal = -45;
                 laneCounterMotorPowerLeft = 100;
-                laneCounterMotorPowerRight = 30;
+                laneCounterMotorPowerRight = 60;
                 //
 
             }
@@ -1333,15 +1333,15 @@ void intTimer(void)
             break;
         }
 
-        // if (encoder._total_cnt >= 1000)
-        // {
-        //     pattern = 11;
-        //     led_m(100, 1, 1, 0);
+        if (encoder._total_cnt >= 800)
+        {
+            pattern = 11;
+            led_m(100, 1, 1, 0);
 
-        //     //encoder.clear();
+            //encoder.clear();
 
-        //     break;
-        // }
+            break;
+        }
         createBrakeMotorVal(44);
         //motor(leftBrakeMotor, rightBrakeMotor);
         motor(leftMotor, rightMotor);
@@ -1447,7 +1447,7 @@ void intTimer(void)
             break;
         }
 
-        if (encoder._total_cnt >= 1000)
+        if (encoder._total_cnt >= 800)
         {
             pattern = 11;
             led_m(100, 1, 1, 0);
@@ -2018,9 +2018,10 @@ void createLineFlag(int rowNum, int height)
         crossCountThreshold=59;
 
     }
-    //else if(pattern!=11){
-    //     centerWidth=100;
-    //     crossCountThreshold=99;    }
+    else if(pattern!=11){
+        brightnessThreshold = maxBrightness * 0.6;
+        crossCountThreshold = crosslineWidth-10;
+    }
     for (int y = rowNum; y < rowNum + height; y++)
     {
         for (int x = 0; x < IMAGE_WIDTH; x++)
