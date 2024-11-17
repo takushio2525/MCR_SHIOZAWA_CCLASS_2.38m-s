@@ -1179,14 +1179,14 @@ void intTimer(void)
 
             // if (encoder.getCnt() <= 555)
             // {
-                constCrankHandleVal = 38;
+                constCrankHandleVal = 36;
                 crankHandleValGain = 0.0;
 
                 constCrankMotorPowerOUT = 90;
                 crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = 10;
-                crankMotorPowerINGain = -0.7;
+                constCrankMotorPowerIN = -40;
+                crankMotorPowerINGain = -0.0;
             // }
             // else
             // {
@@ -1242,13 +1242,13 @@ void intTimer(void)
                 //GOD
                 laneDistance = 330;
 
-                laneHandleVal = 46;
+                laneHandleVal = 50;
                 laneMotorPowerLeft = 0;
-                laneMotorPowerRight = 70;
+                laneMotorPowerRight = 40;
 
                 laneCounterHandleVal = -50;
-                laneCounterMotorPowerLeft = 0;
-                laneCounterMotorPowerRight = 90;
+                laneCounterMotorPowerLeft = 60;
+                laneCounterMotorPowerRight = 80;
                 //
 
             }
