@@ -937,7 +937,7 @@ void intTimer(void)
             }
         }
 
-        flagLine = 127 - (encoder.getCnt()*2);
+        flagLine = 129 - (encoder.getCnt()*2);
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
@@ -1171,49 +1171,49 @@ void intTimer(void)
         led_m(50, 1, 1, 1);
         if (abs(allDeviation[flagLine]) < 15/*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */&& encoder.getTotalCount() >= 500)
         {
-            lineSkipDistance = 100;
+            lineSkipDistance = 170;
 
             laneAfterDistance = 0;
             laneCounterDistance = 300; // 300
             crankDistance = 440;
 
-            if (encoder.getCnt() <= 555)
-            {
-                constCrankHandleVal = 48;
+            // if (encoder.getCnt() <= 555)
+            // {
+                constCrankHandleVal = 38;
                 crankHandleValGain = 0.0;
 
                 constCrankMotorPowerOUT = 90;
                 crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = -30;
-                crankMotorPowerINGain = -0.0;
-            }
-            else
-            {
+                constCrankMotorPowerIN = 10;
+                crankMotorPowerINGain = -0.7;
+            // }
+            // else
+            // {
              
-                //GOD
-                // constCrankHandleVal = 45;
-                // crankHandleValGain = 0.0;
+            //     //GOD
+            //     // constCrankHandleVal = 45;
+            //     // crankHandleValGain = 0.0;
 
-                // constCrankMotorPowerOUT = 90;
-                // crankMotorPowerOUTGain = -0.0;
+            //     // constCrankMotorPowerOUT = 90;
+            //     // crankMotorPowerOUTGain = -0.0;
 
-                // constCrankMotorPowerIN = -50;
-                // crankMotorPowerINGain = -0.0;
-                //
+            //     // constCrankMotorPowerIN = -50;
+            //     // crankMotorPowerINGain = -0.0;
+            //     //
 
-                constCrankHandleVal = 48;
-                crankHandleValGain = 0.0;
+            //     constCrankHandleVal = 38;
+            //     crankHandleValGain = 0.0;
 
-                constCrankMotorPowerOUT = 90;
-                crankMotorPowerOUTGain = -0.0;
+            //     constCrankMotorPowerOUT = 90;
+            //     crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = -60;
-                crankMotorPowerINGain = -0.0;
+            //     constCrankMotorPowerIN = -40;
+            //     crankMotorPowerINGain = -0.0;
 
 
 
-            }
+            // }
 
             if (lineflag_cross)
             {
@@ -1240,15 +1240,15 @@ void intTimer(void)
                 pattern = 51;
                 laneStraightMotorPower = 40;
                 //GOD
-                laneDistance = 340;
+                laneDistance = 330;
 
-                laneHandleVal = 45;
+                laneHandleVal = 46;
                 laneMotorPowerLeft = 0;
-                laneMotorPowerRight = 90;
+                laneMotorPowerRight = 70;
 
-                laneCounterHandleVal = -45;
-                laneCounterMotorPowerLeft = 100;
-                laneCounterMotorPowerRight = 30;
+                laneCounterHandleVal = -50;
+                laneCounterMotorPowerLeft = 0;
+                laneCounterMotorPowerRight = 90;
                 //
 
             }
@@ -1519,13 +1519,13 @@ void intTimer(void)
     case 101:
         // 終了　ログ保存中など
         led_m(100, 0, 1, 1);
-        if (cnt1 >= 200)
+        if (encoder.getCnt() >= 3)
         {
-            handle(0);
+            handle(handleVal);
         }
         else
         {
-            handle(handleVal);
+            handle(0);
         }
         endflag = true;
         motor(0, 0);
@@ -1969,7 +1969,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth=60;
         height=10;
     }
-    volatile int centerRowNum = 34; // ラインを検出する行数
+    volatile int centerRowNum = 35; // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum+25; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
@@ -2466,13 +2466,13 @@ void createHandleVal(void)
     //     allDeviationWa += allDeviation[i];
     // }
     // deviationDifference = abs(allDeviationWa);
-    if ((pattern!=11) /*&& allDeviation[traceLine] < 25*/)
-    {
-        traceLine = 60;
-        handleVal = allDeviation[traceLine] * 0.45;
-    }
-    else
-    {
+    // if ((pattern!=11) /*&& allDeviation[traceLine] < 25*/)
+    // {
+    //     traceLine = 40;
+    //     handleVal = allDeviation[traceLine] * 0.45;
+    // }
+    // else
+    // {
         if (abs(allDeviation[traceLine]) <= straightDeviation)
         {
             handleVal = 0;
@@ -2511,7 +2511,7 @@ void createHandleVal(void)
             //     handleVal = allDeviation[traceLine] * bigCurveCurveGain;
             // }
         }
-    }
+ //  }
 }
 
 void easyCreateDeviation(int rowNum)
