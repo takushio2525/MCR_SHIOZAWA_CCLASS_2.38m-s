@@ -1528,7 +1528,11 @@ void intTimer(void)
             handle(0);
         }
         endflag = true;
-        motor(0, 0);
+        if(pushsw_get()){
+        motor(100, 100);
+        }
+        else{motor(0, 0);
+        }
         break;
 
     default:
