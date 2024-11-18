@@ -937,14 +937,14 @@ void intTimer(void)
             }
         }
 
-        flagLine = 129 - (encoder.getCnt()*2);
+        flagLine = 126 - (encoder.getCnt()*2);
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
         }
-        if (flagLine < 30)
+        if (flagLine < 33)
         {
-            flagLine = 30;
+            flagLine = 33;
         }
         if (flagLine > 50)
         {
@@ -998,7 +998,7 @@ void intTimer(void)
             log_data[log_no].flagL = lineflag_left;
             log_data[log_no].flagK = lineflag_cross;
             log_data[log_no].flagR = lineflag_right;
-            log_data[log_no].flagS = shioCheck; // センターライン検出フラグを作ったら追加
+            log_data[log_no].flagS = lineflag_center; // センターライン検出フラグを作ったら追加
 
             log_data[log_no].total = encoder._total_cnt;
 
@@ -1179,7 +1179,7 @@ void intTimer(void)
 
             // if (encoder.getCnt() <= 555)
             // {
-                constCrankHandleVal = 36;
+                constCrankHandleVal = 34;
                 crankHandleValGain = 0.0;
 
                 constCrankMotorPowerOUT = 90;
@@ -1980,6 +1980,9 @@ void createLineFlag(int rowNum, int height)
 
     volatile int brightnessThreshold = 0; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
     volatile int maxBrightness = 0;
+    volatile int minBrightness = 255;
+    volatile int minBrightnessThreshold = 40; 
+
     volatile int bigImageData[IMAGE_WIDTH][IMAGE_HEIGHT]; // 特定の一行のみの画像の明るさデータが格納される配列
 
     volatile int imageData[IMAGE_WIDTH];  // 特定の一行のみの画像の明るさデータが格納される配列
@@ -2006,10 +2009,18 @@ void createLineFlag(int rowNum, int height)
         {
             bigImageData[x][y] = getImage(x, y);
             imageData[x] = 0;
-            if (maxBrightness < bigImageData[x][y])
-            {
-                maxBrightness = bigImageData[x][y];
+
+            if(x>IMAGE_CENTER - crosslineWidth / 2 && x < IMAGE_CENTER + crosslineWidth / 2){
+                if (maxBrightness < bigImageData[x][y])
+                {
+                    maxBrightness = bigImageData[x][y];
+                }
+                 if (minBrightness > bigImageData[x][y])
+                {
+                    minBrightness = bigImageData[x][y];
+                }
             }
+           
             // imageData[x] = getImage(x, rowNum);
         }
     }
@@ -2033,6 +2044,7 @@ void createLineFlag(int rowNum, int height)
             {
                 imageData[x] = bigImageData[x][y];
             }
+            
         }
     }
     for (int x = 0; x < IMAGE_WIDTH; x++)
@@ -2045,6 +2057,8 @@ void createLineFlag(int rowNum, int height)
     {
         if (imageData[x] > brightnessThreshold) // その画素が閾値よりも大きい値が来ていたらカウント++
         {
+            leftCount++;
+        }else if (imageData[x] > minBrightness+minBrightnessThreshold&&pattern==23) {
             leftCount++;
         }
     }
@@ -2066,6 +2080,8 @@ void createLineFlag(int rowNum, int height)
     {
         if (imageData[x] > brightnessThreshold)
         {
+            rightCount++;
+        }else if (imageData[x] > minBrightness+minBrightnessThreshold&&pattern==23) {
             rightCount++;
         }
     }
@@ -2116,7 +2132,7 @@ void createDeviation(void)
 
     volatile int differenceThresholdY = 5; // 一行下との検出された場所による外れ値検出の閾値
     if(pattern!=11){
-        differenceThresholdY=2;
+        differenceThresholdY=17;
     }
 
     volatile signed int allImageData[IMAGE_HEIGHT][IMAGE_WIDTH]; // 画像データが格納された配列
