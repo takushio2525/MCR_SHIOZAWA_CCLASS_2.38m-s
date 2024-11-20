@@ -78,6 +78,9 @@
 
 #define MAX_MOTOR_POWER 100
 
+#define ONEMETOR_PULSE 1020
+
+
 //------------------------------------------------------------------//
 // Constructor
 //------------------------------------------------------------------//
@@ -937,14 +940,14 @@ void intTimer(void)
             }
         }
 
-        flagLine = 126 - (encoder.getCnt()*2);
+        flagLine = 129 - (encoder.getCnt()*2);
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
         }
-        if (flagLine < 33)
+        if (flagLine < 31)
         {
-            flagLine = 33;
+            flagLine = 31;
         }
         if (flagLine > 50)
         {
@@ -1177,43 +1180,45 @@ void intTimer(void)
             laneCounterDistance = 300; // 300
             crankDistance = 440;
 
-            // if (encoder.getCnt() <= 555)
-            // {
-                constCrankHandleVal = 34;
+            if (encoder.getCnt() <= 46)
+            {
+                     
+                constCrankHandleVal = 47;
                 crankHandleValGain = 0.0;
 
-                constCrankMotorPowerOUT = 90;
+                constCrankMotorPowerOUT = 80;
                 crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = -40;
+                constCrankMotorPowerIN = 40;
                 crankMotorPowerINGain = -0.0;
-            // }
-            // else
-            // {
+            }
+            else
+            {
              
-            //     //GOD
-            //     // constCrankHandleVal = 45;
-            //     // crankHandleValGain = 0.0;
+                //GOD
+                // constCrankHandleVal = 45;
+                // crankHandleValGain = 0.0;
 
-            //     // constCrankMotorPowerOUT = 90;
-            //     // crankMotorPowerOUTGain = -0.0;
+                // constCrankMotorPowerOUT = 90;
+                // crankMotorPowerOUTGain = -0.0;
 
-            //     // constCrankMotorPowerIN = -50;
-            //     // crankMotorPowerINGain = -0.0;
-            //     //
+                // constCrankMotorPowerIN = -50;
+                // crankMotorPowerINGain = -0.0;
+                //
 
-            //     constCrankHandleVal = 38;
-            //     crankHandleValGain = 0.0;
+                    
+                constCrankHandleVal = 47;
+                crankHandleValGain = 0.0;
 
-            //     constCrankMotorPowerOUT = 90;
-            //     crankMotorPowerOUTGain = -0.0;
+                constCrankMotorPowerOUT = 80;
+                crankMotorPowerOUTGain = -0.0;
 
-            //     constCrankMotorPowerIN = -40;
-            //     crankMotorPowerINGain = -0.0;
+                constCrankMotorPowerIN = -30;
+                crankMotorPowerINGain = -0.0;
 
 
 
-            // }
+           }
 
             if (lineflag_cross)
             {
@@ -1242,13 +1247,13 @@ void intTimer(void)
                 //GOD
                 laneDistance = 330;
 
-                laneHandleVal = 50;
-                laneMotorPowerLeft = 0;
+                laneHandleVal = 33;
+                laneMotorPowerLeft =  0;
                 laneMotorPowerRight = 40;
 
                 laneCounterHandleVal = -50;
                 laneCounterMotorPowerLeft = 60;
-                laneCounterMotorPowerRight = 80;
+                laneCounterMotorPowerRight = 10;
                 //
 
             }
@@ -1263,7 +1268,7 @@ void intTimer(void)
         motor(leftMotor, rightMotor);
         handle(handleVal);
 
-        if (encoder.getCourseCount() >= 1120 * 60)
+        if (encoder.getCourseCount() >= ONEMETOR_PULSE * 60)
         {
             pattern = 101;
             cnt1 = 0;
@@ -1964,7 +1969,6 @@ char getImage(int ix, int iy)
 // 引数なし(自分でプログラムを変えてフラグを生成するために必要な行数を指定できるようにして　　初期６０行目)
 // 戻り値：0～255
 ///********************************************************************
-
 void createLineFlag(int rowNum, int height)
 {
     volatile int crosslineWidth = rowNum+20; // クロスラインの検出に中心から何列のデータを使うか指定(コースの幅より外側のデータを使わないため)
@@ -1973,16 +1977,13 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth=60;
         height=10;
     }
-    volatile int centerRowNum = 35; // ラインを検出する行数
+    volatile int centerRowNum = 38; // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum+25; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
 
     volatile int brightnessThreshold = 0; // 明るさの閾値明るさは255段階になっていて閾値より下の値が来ていた場合は切り捨てる
     volatile int maxBrightness = 0;
-    volatile int minBrightness = 255;
-    volatile int minBrightnessThreshold = 40; 
-
     volatile int bigImageData[IMAGE_WIDTH][IMAGE_HEIGHT]; // 特定の一行のみの画像の明るさデータが格納される配列
 
     volatile int imageData[IMAGE_WIDTH];  // 特定の一行のみの画像の明るさデータが格納される配列
@@ -2009,18 +2010,10 @@ void createLineFlag(int rowNum, int height)
         {
             bigImageData[x][y] = getImage(x, y);
             imageData[x] = 0;
-
-            if(x>IMAGE_CENTER - crosslineWidth / 2 && x < IMAGE_CENTER + crosslineWidth / 2){
-                if (maxBrightness < bigImageData[x][y])
-                {
-                    maxBrightness = bigImageData[x][y];
-                }
-                 if (minBrightness > bigImageData[x][y])
-                {
-                    minBrightness = bigImageData[x][y];
-                }
+            if (maxBrightness < bigImageData[x][y])
+            {
+                maxBrightness = bigImageData[x][y];
             }
-           
             // imageData[x] = getImage(x, rowNum);
         }
     }
@@ -2044,7 +2037,6 @@ void createLineFlag(int rowNum, int height)
             {
                 imageData[x] = bigImageData[x][y];
             }
-            
         }
     }
     for (int x = 0; x < IMAGE_WIDTH; x++)
@@ -2057,8 +2049,6 @@ void createLineFlag(int rowNum, int height)
     {
         if (imageData[x] > brightnessThreshold) // その画素が閾値よりも大きい値が来ていたらカウント++
         {
-            leftCount++;
-        }else if (imageData[x] > minBrightness+minBrightnessThreshold&&pattern==23) {
             leftCount++;
         }
     }
@@ -2080,8 +2070,6 @@ void createLineFlag(int rowNum, int height)
     {
         if (imageData[x] > brightnessThreshold)
         {
-            rightCount++;
-        }else if (imageData[x] > minBrightness+minBrightnessThreshold&&pattern==23) {
             rightCount++;
         }
     }
@@ -2132,7 +2120,7 @@ void createDeviation(void)
 
     volatile int differenceThresholdY = 5; // 一行下との検出された場所による外れ値検出の閾値
     if(pattern!=11){
-        differenceThresholdY=17;
+        differenceThresholdY=5;
     }
 
     volatile signed int allImageData[IMAGE_HEIGHT][IMAGE_WIDTH]; // 画像データが格納された配列
@@ -2291,10 +2279,18 @@ void createDeviation(void)
                 leftCenterCount[y] = count;
             }
         }
+        if(pattern==11){
         if (abs(leftExceedingXPositions[y][leftCenterCount[y]] - leftExceedingXPositions[y + 1][leftCenterCount[y + 1]]) > differenceThresholdY&&y<100 )
         {
             leftCenterCount[y] = leftCenterCount[y + 1];
             leftExceedingXPositions[y][leftCenterCount[y]] = leftExceedingXPositions[y + 1][leftCenterCount[y + 1]];
+        }
+        }else {
+            if (abs(leftExceedingXPositions[y][leftCenterCount[y]] - leftExceedingXPositions[y + 1][leftCenterCount[y + 1]]) > differenceThresholdY )
+            {
+                leftCenterCount[y] = leftCenterCount[y + 1];
+                leftExceedingXPositions[y][leftCenterCount[y]] = leftExceedingXPositions[y + 1][leftCenterCount[y + 1]];
+            }
         }
         for (int count = 0; count < rightExceedingXPositionsCount[y]; count++)
         {
@@ -2305,10 +2301,19 @@ void createDeviation(void)
                 rightCenterCount[y] = count;
             }
         }
-        if (abs(rightExceedingXPositions[y][rightCenterCount[y]] - rightExceedingXPositions[y + 1][rightCenterCount[y + 1]]) > differenceThresholdY&&y<100)
-        {
-            rightCenterCount[y] = rightCenterCount[y + 1];
-            rightExceedingXPositions[y][rightCenterCount[y]] = rightExceedingXPositions[y + 1][rightCenterCount[y + 1]];
+        if(pattern==11){
+            if (abs(rightExceedingXPositions[y][rightCenterCount[y]] - rightExceedingXPositions[y + 1][rightCenterCount[y + 1]]) > differenceThresholdY&&y<100)
+            {
+               rightCenterCount[y] = rightCenterCount[y + 1];
+               rightExceedingXPositions[y][rightCenterCount[y]] = rightExceedingXPositions[y + 1][rightCenterCount[y + 1]];
+            }
+        }
+        else{
+            if (abs(rightExceedingXPositions[y][rightCenterCount[y]] - rightExceedingXPositions[y + 1][rightCenterCount[y + 1]]) > differenceThresholdY)
+            {
+                rightCenterCount[y] = rightCenterCount[y + 1];
+                rightExceedingXPositions[y][rightCenterCount[y]] = rightExceedingXPositions[y + 1][rightCenterCount[y + 1]];
+            }
         }
     }
 
@@ -2486,13 +2491,13 @@ void createHandleVal(void)
     //     allDeviationWa += allDeviation[i];
     // }
     // deviationDifference = abs(allDeviationWa);
-    // if ((pattern!=11) /*&& allDeviation[traceLine] < 25*/)
+    // if (pattern==52 ||pattern==53/*&& allDeviation[traceLine] < 25*/)
     // {
-    //     traceLine = 40;
-    //     handleVal = allDeviation[traceLine] * 0.45;
+    //     traceLine = 50;
+    //     handleVal = allDeviation[traceLine] * 0.5;
     // }
     // else
-    // {
+    //{
         if (abs(allDeviation[traceLine]) <= straightDeviation)
         {
             handleVal = 0;
@@ -2531,7 +2536,7 @@ void createHandleVal(void)
             //     handleVal = allDeviation[traceLine] * bigCurveCurveGain;
             // }
         }
- //  }
+ // }
 }
 
 void easyCreateDeviation(int rowNum)
