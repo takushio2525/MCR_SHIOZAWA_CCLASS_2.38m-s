@@ -940,15 +940,15 @@ void intTimer(void)
             }
         }
 
-        flagLine = 129 - (encoder.getCnt()*2);
+        flagLine = 133 - (encoder.getCnt()*2);
         //flagLine = 79 - encoder.getCnt();
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
         }
-        else if (flagLine < 32)
+        else if (flagLine < 36)
         {
-            flagLine = 32;
+            flagLine = 36;
         }
         else if (flagLine > 40)
         {
@@ -1208,13 +1208,13 @@ void intTimer(void)
                 //
 
                     
-                constCrankHandleVal = 34;
+                constCrankHandleVal = 33;
                 crankHandleValGain = 0.0;
 
                 constCrankMotorPowerOUT = 90;
                 crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = -40;
+                constCrankMotorPowerIN = -30;
                 crankMotorPowerINGain = -0.0;
 
 
@@ -1254,7 +1254,7 @@ void intTimer(void)
 
                 laneCounterHandleVal = -50;
                 laneCounterMotorPowerLeft = 30;
-                laneCounterMotorPowerRight = 55;
+                laneCounterMotorPowerRight = 40;
                 //
 
             }
@@ -2451,17 +2451,17 @@ void createHandleVal(void)
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
-    float middleEncoderGain = 0.26;
+    float middleEncoderGain = 0.27;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 28.4;
+    float middleConstEncoderGain = 28;
     float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
     volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 38;
+    volatile signed int farTraceLine = 35;
     volatile signed int midTraceLine = 40;
     volatile signed int nearTraceLine = 42;
 
