@@ -941,17 +941,18 @@ void intTimer(void)
         }
 
         flagLine = 129 - (encoder.getCnt()*2);
+        //flagLine = 79 - encoder.getCnt();
         //flagLine = 50;
         if(/*encoder.getCnt() < 47 && */(pattern == 11||pattern==22||pattern==52)){
             flagLine = 50;
         }
-        if (flagLine < 31)
+        else if (flagLine < 32)
         {
-            flagLine = 31;
+            flagLine = 32;
         }
-        if (flagLine > 50)
+        else if (flagLine > 40)
         {
-            flagLine = 50;
+            flagLine = 40;
         }
         // flagLine = 30;
         // if(encoder.getCnt()<=42){
@@ -1180,20 +1181,20 @@ void intTimer(void)
             laneCounterDistance = 300; // 300
             crankDistance = 440;
 
-            if (encoder.getCnt() <= 46)
-            {
+            // if (encoder.getCnt() <= 46)
+            // {
                      
-                constCrankHandleVal = 47;
-                crankHandleValGain = 0.0;
+            //     constCrankHandleVal = 46;
+            //     crankHandleValGain = 0.0;
 
-                constCrankMotorPowerOUT = 80;
-                crankMotorPowerOUTGain = -0.0;
+            //     constCrankMotorPowerOUT = 90;
+            //     crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = 40;
-                crankMotorPowerINGain = -0.0;
-            }
-            else
-            {
+            //     constCrankMotorPowerIN = -40;
+            //     crankMotorPowerINGain = -0.0;
+            // }
+            // else
+            // {
              
                 //GOD
                 // constCrankHandleVal = 45;
@@ -1207,18 +1208,18 @@ void intTimer(void)
                 //
 
                     
-                constCrankHandleVal = 47;
+                constCrankHandleVal = 34;
                 crankHandleValGain = 0.0;
 
-                constCrankMotorPowerOUT = 80;
+                constCrankMotorPowerOUT = 90;
                 crankMotorPowerOUTGain = -0.0;
 
-                constCrankMotorPowerIN = -30;
+                constCrankMotorPowerIN = -40;
                 crankMotorPowerINGain = -0.0;
 
 
 
-           }
+          // }
 
             if (lineflag_cross)
             {
@@ -1252,8 +1253,8 @@ void intTimer(void)
                 laneMotorPowerRight = 40;
 
                 laneCounterHandleVal = -50;
-                laneCounterMotorPowerLeft = 60;
-                laneCounterMotorPowerRight = 10;
+                laneCounterMotorPowerLeft = 30;
+                laneCounterMotorPowerRight = 55;
                 //
 
             }
@@ -2450,17 +2451,17 @@ void createHandleVal(void)
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
-    float middleEncoderGain = 0.27;
+    float middleEncoderGain = 0.26;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 28;
+    float middleConstEncoderGain = 28.4;
     float bigConstEncoderGain = 30;
 
     volatile signed int straightDeviation = 0;
     volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 35;
+    volatile signed int farTraceLine = 38;
     volatile signed int midTraceLine = 40;
     volatile signed int nearTraceLine = 42;
 
