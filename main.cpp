@@ -942,16 +942,16 @@ void intTimer(void)
             }
         }
 
-        flagLine = 129 - (encoder.getCnt() * 2);
+        flagLine = 122 - (encoder.getCnt() * 2);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52))
         {
             flagLine = 50;
         }
-        else if (flagLine < 30)
+        else if (flagLine < 25)
         {
-            flagLine = 30;
+            flagLine = 25;
         }
         else if (flagLine > 40)
         {
@@ -1248,12 +1248,12 @@ void intTimer(void)
                 // GOD
                 laneDistance = 330;
 
-                laneHandleVal = 33;
-                laneMotorPowerLeft = 0;
+                laneHandleVal = 28;
+                laneMotorPowerLeft = 20;
                 laneMotorPowerRight = 40;
 
                 laneCounterHandleVal = -50;
-                laneCounterMotorPowerLeft = 30;
+                laneCounterMotorPowerLeft = 35;
                 laneCounterMotorPowerRight = 40;
                 //
             }
@@ -1980,7 +1980,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = 38; // ラインを検出する行数
+    volatile int centerRowNum = 32; // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 25; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
@@ -2468,9 +2468,9 @@ void createHandleVal(void)
     volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 35;
-    volatile signed int midTraceLine = 40;
-    volatile signed int nearTraceLine = 42;
+    volatile signed int farTraceLine = 33;
+    volatile signed int midTraceLine = 38;
+    volatile signed int nearTraceLine = 40;
 
     float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
