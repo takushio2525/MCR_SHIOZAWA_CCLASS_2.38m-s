@@ -954,9 +954,9 @@ void intTimer(void)
         {
             flagLine = 54;
         }
-        else if (flagLine < 30)
+        else if (flagLine < 33)
         {
-            flagLine = 30;
+            flagLine = 33;
         }
         else if (flagLine > 53)
         {
@@ -1205,7 +1205,7 @@ void intTimer(void)
             // else
             // {
 
-            constCrankHandleVal = 8;
+            constCrankHandleVal = 11;
             // if(constCrankHandleVal>=49){
             //     constCrankHandleVal=49;
             // }
@@ -1217,16 +1217,16 @@ void intTimer(void)
             constCrankMotorPowerOUT = 100;
             crankMotorPowerOUTGain = 0;
 
-            constCrankMotorPowerIN = -46; // 70
-            crankMotorPowerINGain = 1.8;
+            constCrankMotorPowerIN = -60; // 70
+            crankMotorPowerINGain = 2.2;
             // }
 
             laneStraightMotorPower = 40;
             // GOD
             laneDistance = 290;
 
-            laneHandleVal = -3;
-            lanePowerGain = 1;
+            laneHandleVal = 20;
+            lanePowerGain = 0.6;
 
             laneMotorPowerIN = 100;
             laneMotorPowerOUT = 100;
@@ -2085,7 +2085,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = map(encoder.getCnt(), 40, 50, 44, 31); // ラインを検出する行数
+    volatile int centerRowNum = map(encoder.getCnt(), 40, 50, 48, 36); // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 10; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
