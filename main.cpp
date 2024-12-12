@@ -947,7 +947,7 @@ void intTimer(void)
         }
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = map(encoder.getCnt(), 40, 50, 45, 30);
+        flagLine = map(encoder.getCnt(), 40, 50, 43, 30);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
@@ -1183,7 +1183,7 @@ void intTimer(void)
     case 11:
         // 通常トレース
         led_m(50, 1, 1, 1);
-        if (abs(allDeviation[flagLine - 2]) < 14 /*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */ && encoder.getTotalCount() >= 500)
+        if (abs(allDeviation[flagLine - 2]) < 20 /*&& abs(allDeviation[60]) < 15 && abs(allDeviation[90]) < 15 */ && encoder.getTotalCount() >= 500)
         {
             lineSkipDistance = 100;
 
@@ -1217,23 +1217,23 @@ void intTimer(void)
             constCrankMotorPowerOUT = 100;
             crankMotorPowerOUTGain = 0;
 
-            constCrankMotorPowerIN = -60; // 70
-            crankMotorPowerINGain = 2.2;
+            constCrankMotorPowerIN = -53; // 70
+            crankMotorPowerINGain = 1.9;
             // }
 
             laneStraightMotorPower = 40;
             // GOD
             laneDistance = 290;
 
-            laneHandleVal = 20;
-            lanePowerGain = 0.6;
+            laneHandleVal = 39;
+            lanePowerGain = 0.0;
 
             laneMotorPowerIN = 100;
-            laneMotorPowerOUT = 100;
+            laneMotorPowerOUT = 90;
 
-            laneCounterHandleVal = 40;
+            laneCounterHandleVal = 32;
             laneCounterMotorPowerOUT = 100;
-            laneCounterMotorPowerIN = 80;
+            laneCounterMotorPowerIN = 100;
             //
 
             if (lineflag_cross)
@@ -2085,7 +2085,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = map(encoder.getCnt(), 40, 50, 48, 36); // ラインを検出する行数
+    volatile int centerRowNum = map(encoder.getCnt(), 40, 50, 44, 38); // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 10; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
