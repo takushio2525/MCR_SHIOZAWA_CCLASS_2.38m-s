@@ -1222,6 +1222,7 @@ void intTimer(void)
             // }
 
             laneStraightMotorPower = 40;
+
             // GOD
             laneDistance = 290;
 
