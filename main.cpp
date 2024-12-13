@@ -947,7 +947,7 @@ void intTimer(void)
         }
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = map(encoder.getCnt(), 40, 50, 43, 30);
+        flagLine = map(encoder.getCnt(), 44, 50, 40, 32);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
@@ -1226,8 +1226,8 @@ void intTimer(void)
             // GOD
             laneDistance = 290;
 
-            laneHandleVal = 39;
-            lanePowerGain = 0.0;
+            laneHandleVal = 15;
+            lanePowerGain = 0.5;
 
             laneMotorPowerIN = 100;
             laneMotorPowerOUT = 90;
@@ -2086,7 +2086,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = map(encoder.getCnt(), 40, 50, 44, 38); // ラインを検出する行数
+    volatile int centerRowNum = map(encoder.getCnt(), 40, 50, 46, 40); // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 10; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
