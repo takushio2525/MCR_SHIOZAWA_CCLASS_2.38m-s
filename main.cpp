@@ -1244,7 +1244,7 @@ void intTimer(void)
 
             // LANE_HANDLE_CALK
 
-            laneHandleVal = 16;
+            laneHandleVal = 18;
             lanePowerGain = 0.3;
 
             laneMotorPowerIN = 100;
