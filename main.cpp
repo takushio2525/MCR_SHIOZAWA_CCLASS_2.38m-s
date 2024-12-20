@@ -960,16 +960,16 @@ void intTimer(void)
         }
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = map(encoder.getCnt(), 40, 50, 40, 35);
+        flagLine = map(encoder.getCnt(), 40, 50, 40, 37);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
         {
             flagLine = 54;
         }
-        else if (flagLine < 35)
+        else if (flagLine < 37)
         {
-            flagLine = 35;
+            flagLine = 37;
         }
         else if (flagLine > 53)
         {
@@ -1227,12 +1227,12 @@ void intTimer(void)
             //     constCrankHandleVal=35;
             // }
 
-            crankHandleValGain = 1;
+            crankHandleValGain = 0.9;
 
             constCrankMotorPowerOUT = 100;
             crankMotorPowerOUTGain = 0;
 
-            constCrankMotorPowerIN = 135; // 70
+            constCrankMotorPowerIN = 160; // 70
             crankMotorPowerINGain = -1.9;
             // }
 
@@ -1244,8 +1244,8 @@ void intTimer(void)
 
             // LANE_HANDLE_CALK
 
-            laneHandleVal = 18;
-            lanePowerGain = 0.3;
+            laneHandleVal = 10;
+            lanePowerGain = 0.6;
 
             laneMotorPowerIN = 100;
             laneMotorPowerOUT = 100;
