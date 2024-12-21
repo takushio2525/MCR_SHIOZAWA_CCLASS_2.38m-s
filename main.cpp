@@ -45,7 +45,7 @@
 
 
 //#define LANE_DISTANCE laneDistance=320
-#define LANE_DISTANCE laneDistance=encoder.getCnt()*0.7+265;
+#define LANE_DISTANCE laneDistance=encoder.getCnt()*0.2+275;
 //#define LANE_DISTANCE laneDistance=map(encoder.getCnt(), 45, 50, 320, 400);
 
 //------------------------------------------------------------------//
@@ -960,14 +960,14 @@ void intTimer(void)
         }
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = map(encoder.getCnt(), 40, 50, 40, 38);
+        flagLine = map(encoder.getCnt(), 40, 50, 42, 35);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
         {
             flagLine = 54;
         }
-        else if (flagLine < 38)
+        else if (flagLine < 35)
         {
             flagLine = 38;
         }
@@ -1232,8 +1232,8 @@ void intTimer(void)
             constCrankMotorPowerOUT = 100;
             crankMotorPowerOUTGain = 0;
 
-            constCrankMotorPowerIN = 135; // 70
-            crankMotorPowerINGain = -1.9;
+            constCrankMotorPowerIN = 150; // 70
+            crankMotorPowerINGain = -1.6;
             // }
 
             laneStraightMotorPower = 40;
@@ -2110,7 +2110,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 49, 47); // ラインを検出する行数
+    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 45, 45); // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 9; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
