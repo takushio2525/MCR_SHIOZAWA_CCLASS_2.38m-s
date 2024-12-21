@@ -40,12 +40,12 @@
 //#define LANE_HANDLE_CALK map(encoder.getCnt(), 45, 50, 26, 42)
 #define LANE_HANDLE_CALK encoder.getCnt()*lanePowerGain+laneHandleVal
 
-#define LANE_COUNTER_HANDLE_CALK encoder.getCnt()*0.6
+#define LANE_COUNTER_HANDLE_CALK encoder.getCnt()*0.4
 //#define LANE_COUNTER_HANDLE_CALK laneCounterHandleVal
 
 
 //#define LANE_DISTANCE laneDistance=320
-#define LANE_DISTANCE laneDistance=encoder.getCnt()*1+260;
+#define LANE_DISTANCE laneDistance=encoder.getCnt()*0.7+265;
 //#define LANE_DISTANCE laneDistance=map(encoder.getCnt(), 45, 50, 320, 400);
 
 //------------------------------------------------------------------//
@@ -960,16 +960,16 @@ void intTimer(void)
         }
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = map(encoder.getCnt(), 40, 50, 40, 37);
+        flagLine = map(encoder.getCnt(), 40, 50, 40, 38);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
         {
             flagLine = 54;
         }
-        else if (flagLine < 37)
+        else if (flagLine < 38)
         {
-            flagLine = 37;
+            flagLine = 38;
         }
         else if (flagLine > 53)
         {
@@ -1227,12 +1227,12 @@ void intTimer(void)
             //     constCrankHandleVal=35;
             // }
 
-            crankHandleValGain = 0.9;
+            crankHandleValGain = 1;
 
             constCrankMotorPowerOUT = 100;
             crankMotorPowerOUTGain = 0;
 
-            constCrankMotorPowerIN = 160; // 70
+            constCrankMotorPowerIN = 135; // 70
             crankMotorPowerINGain = -1.9;
             // }
 
@@ -1244,8 +1244,8 @@ void intTimer(void)
 
             // LANE_HANDLE_CALK
 
-            laneHandleVal = 10;
-            lanePowerGain = 0.6;
+            laneHandleVal = 12;
+            lanePowerGain = 0.5;
 
             laneMotorPowerIN = 100;
             laneMotorPowerOUT = 100;
@@ -2110,7 +2110,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 50, 45); // ラインを検出する行数
+    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 49, 47); // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 9; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
