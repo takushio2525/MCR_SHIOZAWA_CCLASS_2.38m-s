@@ -38,20 +38,15 @@
 #define HANDLE_STEP 18 // 1 degree value
 
 //#define LANE_HANDLE_CALK map(encoder.getCnt(), 45, 50, 26, 42)
-
-#define CRANK_DISTANCE_CALK map(encoder.getCnt(),30,50,470,410)
-
-
 #define LANE_HANDLE_CALK encoder.getCnt()*lanePowerGain+laneHandleVal
 
-#define LANE_COUNTER_HANDLE_CALK encoder.getCnt()*0.1+23
+#define LANE_COUNTER_HANDLE_CALK encoder.getCnt()*0.6
 //#define LANE_COUNTER_HANDLE_CALK laneCounterHandleVal
 
 
 //#define LANE_DISTANCE laneDistance=320
-//#define LANE_DISTANCE laneDistance=encoder.getCnt()*0.9+300;
-#define LANE_DISTANCE laneDistance=map(encoder.getCnt(),30,50,300,350);
-
+#define LANE_DISTANCE laneDistance=encoder.getCnt()*1+260;
+//#define LANE_DISTANCE laneDistance=map(encoder.getCnt(), 45, 50, 320, 400);
 
 //------------------------------------------------------------------//
 // マスク値設定 ×：マスクあり(無効)　○：マスク無し(有効)
@@ -95,6 +90,9 @@
 #define MAX_MOTOR_POWER 100
 
 #define ONEMETOR_PULSE 1020
+
+#define LANE_DISTANCE laneDistance=encoder.getCnt()*1+260;
+
 
 //------------------------------------------------------------------//
 // Constructor
@@ -291,14 +289,6 @@ volatile int laneDistance;
 volatile int laneAfterDistance;
 volatile int laneCounterDistance;
 volatile bool resetFlag = true;
-
-volatile int lowSpeedLimit;
-volatile int lowSpeedCrankHandle;
-volatile int lowSpeedCrankDistance;
-
-volatile int lowSpeedLaneHandle;
-volatile int lowSpeedLaneDistance;
-
 
 typedef struct
 {
@@ -973,7 +963,7 @@ void intTimer(void)
         }
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = map(encoder.getCnt(), 40, 52, 40, 38);
+        flagLine = map(encoder.getCnt(), 40, 50, 40, 35);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
@@ -1257,8 +1247,8 @@ void intTimer(void)
 
             // LANE_HANDLE_CALK
 
-            laneHandleVal = 3;
-            lanePowerGain = 0.6;
+            laneHandleVal = 18;
+            lanePowerGain = 0.3;
 
             laneMotorPowerIN = 100;
             laneMotorPowerOUT = 100;
@@ -1266,16 +1256,6 @@ void intTimer(void)
             laneCounterHandleVal = 37;
             laneCounterMotorPowerOUT = 100;
             laneCounterMotorPowerIN = 100;
-
-
-
-            lowSpeedLimit=39;
-
-            lowSpeedCrankHandle = 24;
-            lowSpeedCrankDistance = 400;
-
-            lowSpeedLaneHandle = 20;
-            lowSpeedLaneDistance = 440;
             //
 
             if (lineflag_cross)
@@ -1285,12 +1265,12 @@ void intTimer(void)
             else if (lineflag_right)
             {
                 pattern = 51;
-                trace_offset = 4;
+                trace_offset = -5;
             }
             else if (lineflag_left)
             {
                 pattern = 61;
-                trace_offset = -4;
+                trace_offset = 5;
             }
         }
 
@@ -1338,18 +1318,15 @@ void intTimer(void)
         // クロスライン後のトレース、クランク検出
 
         crankHandleVal = constCrankHandleVal + encoder.getCnt() * crankHandleValGain;
-        crankDistance= CRANK_DISTANCE_CALK;
 
         crankMotorPowerOUT = constCrankMotorPowerOUT + encoder.getCnt() * crankMotorPowerOUTGain;
         crankMotorPowerIN = constCrankMotorPowerIN + encoder.getCnt() * crankMotorPowerINGain;
-
-        if(encoder.getCnt()<=lowSpeedLimit){
-                crankHandleVal=lowSpeedCrankHandle;
-                crankDistance=lowSpeedCrankDistance;
-        }
         if (crankMotorPowerIN < -95)
         {
             crankMotorPowerIN = -95;
+        }
+        if(crankHandleVal>43){
+            crankHandleVal=43;
         }
 
         if (lineflag_left)
@@ -1513,10 +1490,6 @@ void intTimer(void)
             pattern = 55;
             led_m(100, 1, 0, 0);
             LANE_DISTANCE
-
-            if(encoder.getCnt()<=lowSpeedLimit){
-               laneDistance =lowSpeedLaneDistance;
-        }
             encoder.clear();
         }
         break;
@@ -1529,6 +1502,7 @@ void intTimer(void)
         {
 
             pattern = 56;
+            LANE_DISTANCE
             led_m(100, 0, 0, 0);
             encoder.clear();
         }
@@ -1633,11 +1607,6 @@ void intTimer(void)
             pattern = 65;
             led_m(100, 1, 0, 0);
             LANE_DISTANCE
-
-              if(encoder.getCnt()<=lowSpeedLimit){
-               laneDistance =lowSpeedLaneDistance;
-        }
-
             encoder.clear();
         }
         break;
@@ -1651,6 +1620,7 @@ void intTimer(void)
 
             pattern = 66;
             led_m(100, 0, 0, 0);
+            LANE_DISTANCE
             encoder.clear();
         }
         break;
@@ -2148,7 +2118,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 50, 40); // ラインを検出する行数
+    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 50, 45); // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 9; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
@@ -2198,6 +2168,8 @@ void createLineFlag(int rowNum, int height)
     else if (pattern != 11)
     {
         crossCountThreshold = crosslineWidth - 10;
+        brightnessThreshold = maxBrightness * 0.66;
+
     }
     for (int y = rowNum; y < rowNum + height; y++)
     {
@@ -2689,8 +2661,8 @@ void createHandleVal(void)
     volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 41;
-    volatile signed int midTraceLine = 43;
+    volatile signed int farTraceLine = 40;
+    volatile signed int midTraceLine = 42;
     volatile signed int nearTraceLine = 45;
 
     float midDifferenceGain = 0.4;
