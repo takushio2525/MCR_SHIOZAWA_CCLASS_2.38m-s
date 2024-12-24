@@ -37,8 +37,9 @@
 // 3100
 #define HANDLE_STEP 18 // 1 degree value
 
-#define CRANK_HANDLE_CALK encoder.getCnt()*crankHandleValGain+constCrankHandleVal
-//#define CRANK_HANDLE_CALK map(encoder.getCnt(),30,50,24,38)
+//#define LANE_HANDLE_CALK map(encoder.getCnt(), 45, 50, 26, 42)
+
+#define CRANK_DISTANCE_CALK map(encoder.getCnt(),30,50,470,410)
 
 
 #define LANE_HANDLE_CALK encoder.getCnt()*lanePowerGain+laneHandleVal
@@ -48,7 +49,9 @@
 
 
 //#define LANE_DISTANCE laneDistance=320
-#define LANE_DISTANCE laneDistance=encoder.getCnt()*0.9+300;
+//#define LANE_DISTANCE laneDistance=encoder.getCnt()*0.9+300;
+#define LANE_DISTANCE laneDistance=map(encoder.getCnt(),30,50,300,350);
+
 
 //------------------------------------------------------------------//
 // マスク値設定 ×：マスクあり(無効)　○：マスク無し(有効)
@@ -288,6 +291,14 @@ volatile int laneDistance;
 volatile int laneAfterDistance;
 volatile int laneCounterDistance;
 volatile bool resetFlag = true;
+
+volatile int lowSpeedLimit;
+volatile int lowSpeedCrankHandle;
+volatile int lowSpeedCrankDistance;
+
+volatile int lowSpeedLaneHandle;
+volatile int lowSpeedLaneDistance;
+
 
 typedef struct
 {
@@ -962,16 +973,16 @@ void intTimer(void)
         }
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = map(encoder.getCnt(), 40, 50, 40, 35);
+        flagLine = map(encoder.getCnt(), 40, 52, 40, 38);
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
         {
             flagLine = 54;
         }
-        else if (flagLine < 35)
+        else if (flagLine < 38)
         {
-            flagLine = 35;
+            flagLine = 38;
         }
         else if (flagLine > 53)
         {
@@ -1221,7 +1232,7 @@ void intTimer(void)
             // else
             // {
 
-            constCrankHandleVal = 3;
+            constCrankHandleVal = -2;
             // if(constCrankHandleVal>=49){
             //     constCrankHandleVal=49;
             // }
@@ -1229,7 +1240,7 @@ void intTimer(void)
             //     constCrankHandleVal=35;
             // }
 
-            crankHandleValGain = 0.8;
+            crankHandleValGain = 1;
 
             constCrankMotorPowerOUT = 100;
             crankMotorPowerOUTGain = 0;
@@ -1255,6 +1266,16 @@ void intTimer(void)
             laneCounterHandleVal = 37;
             laneCounterMotorPowerOUT = 100;
             laneCounterMotorPowerIN = 100;
+
+
+
+            lowSpeedLimit=39;
+
+            lowSpeedCrankHandle = 24;
+            lowSpeedCrankDistance = 400;
+
+            lowSpeedLaneHandle = 20;
+            lowSpeedLaneDistance = 440;
             //
 
             if (lineflag_cross)
@@ -1316,10 +1337,16 @@ void intTimer(void)
     case 23:
         // クロスライン後のトレース、クランク検出
 
-        crankHandleVal = CRANK_HANDLE_CALK;
+        crankHandleVal = constCrankHandleVal + encoder.getCnt() * crankHandleValGain;
+        crankDistance= CRANK_DISTANCE_CALK;
 
         crankMotorPowerOUT = constCrankMotorPowerOUT + encoder.getCnt() * crankMotorPowerOUTGain;
         crankMotorPowerIN = constCrankMotorPowerIN + encoder.getCnt() * crankMotorPowerINGain;
+
+        if(encoder.getCnt()<=lowSpeedLimit){
+                crankHandleVal=lowSpeedCrankHandle;
+                crankDistance=lowSpeedCrankDistance;
+        }
         if (crankMotorPowerIN < -95)
         {
             crankMotorPowerIN = -95;
@@ -1486,6 +1513,10 @@ void intTimer(void)
             pattern = 55;
             led_m(100, 1, 0, 0);
             LANE_DISTANCE
+
+            if(encoder.getCnt()<=lowSpeedLimit){
+               laneDistance =lowSpeedLaneDistance;
+        }
             encoder.clear();
         }
         break;
@@ -1602,6 +1633,11 @@ void intTimer(void)
             pattern = 65;
             led_m(100, 1, 0, 0);
             LANE_DISTANCE
+
+              if(encoder.getCnt()<=lowSpeedLimit){
+               laneDistance =lowSpeedLaneDistance;
+        }
+
             encoder.clear();
         }
         break;
@@ -2653,9 +2689,9 @@ void createHandleVal(void)
     volatile signed int middleCurveDeviation = 7;
     volatile signed int bigCurveDeviation = 100;
 
-    volatile signed int farTraceLine = 42;
-    volatile signed int midTraceLine = 45;
-    volatile signed int nearTraceLine = 47;
+    volatile signed int farTraceLine = 41;
+    volatile signed int midTraceLine = 43;
+    volatile signed int nearTraceLine = 45;
 
     float midDifferenceGain = 0.4;
     float bigDifferenceGain = 0.7;
