@@ -37,16 +37,14 @@
 // 3100
 #define HANDLE_STEP 18 // 1 degree value
 
-//#define LANE_HANDLE_CALK map(encoder.getCnt(), 45, 50, 26, 42)
-#define LANE_HANDLE_CALK encoder.getCnt()*lanePowerGain+laneHandleVal
+// #define LANE_HANDLE_CALK map(encoder.getCnt(), 45, 50, 26, 42)
+#define LANE_HANDLE_CALK encoder.getCnt() * lanePowerGain + laneHandleVal
 
-#define LANE_COUNTER_HANDLE_CALK encoder.getCnt()*0.6
-//#define LANE_COUNTER_HANDLE_CALK laneCounterHandleVal
-
-
-//#define LANE_DISTANCE laneDistance=320
-#define LANE_DISTANCE laneDistance=encoder.getCnt()*1+260;
-//#define LANE_DISTANCE laneDistance=map(encoder.getCnt(), 45, 50, 320, 400);
+#define LANE_COUNTER_HANDLE_CALK encoder.getCnt() * 0.1 + 23
+// #define LANE_COUNTER_HANDLE_CALK laneCounterHandleVal
+// #define LANE_DISTANCE laneDistance=320
+// #define LANE_DISTANCE laneDistance = encoder.getCnt() * 1 + 260;
+#define LANE_DISTANCE laneDistance = map(encoder.getCnt(), 30, 50, 300, 350);
 
 //------------------------------------------------------------------//
 // マスク値設定 ×：マスクあり(無効)　○：マスク無し(有効)
@@ -90,9 +88,6 @@
 #define MAX_MOTOR_POWER 100
 
 #define ONEMETOR_PULSE 1020
-
-#define LANE_DISTANCE laneDistance=encoder.getCnt()*1+260;
-
 
 //------------------------------------------------------------------//
 // Constructor
@@ -289,6 +284,15 @@ volatile int laneDistance;
 volatile int laneAfterDistance;
 volatile int laneCounterDistance;
 volatile bool resetFlag = true;
+
+volatile int lowSpeedLimit;
+volatile int lowSpeedCrankHandle;
+volatile int lowSpeedCrankDistance;
+
+volatile int lowSpeedLaneHandle;
+volatile int lowSpeedLaneDistance;
+
+volatile int flagLine = 0;
 
 typedef struct
 {
@@ -898,7 +902,6 @@ void intTimer(void)
     cnt_msd++;
     cnt_debug++;
     static int beforEncoder = 0;
-    static int flagLine = 0;
 
     // field check
     if (vfield_count2 != vfield_count2_buff)
@@ -1019,9 +1022,9 @@ void intTimer(void)
             // ログ（RAM）記録
             log_data[log_no].cnt_msdwritetime = cnt_msdwritetime;
             log_data[log_no].pattern = pattern;
-            log_data[log_no].convertBCD = deviationDifference;
+            log_data[log_no].convertBCD = handleVal;
             log_data[log_no].handle = msd_handle;
-            log_data[log_no].hennsa = allDeviation[flagLine + 2]; // 偏差を検出するプログラムを作ったら追加
+            log_data[log_no].hennsa = allDeviation[flagLine]; // 偏差を検出するプログラムを作ったら追加
             log_data[log_no].encoder = encoder.getCnt();
             log_data[log_no].motorL = flagLine /*getImage(-allDeviation[60] + IMAGE_CENTER - 35, 60)*/;
             log_data[log_no].motorR = msd_r;
@@ -1242,13 +1245,13 @@ void intTimer(void)
             laneStraightMotorPower = 40;
 
             // GOD
-            //laneDistance = 320;
-            //LANE_DISTANCE
+            // laneDistance = 320;
+            // LANE_DISTANCE
 
             // LANE_HANDLE_CALK
 
-            laneHandleVal = 18;
-            lanePowerGain = 0.3;
+            laneHandleVal = 3;
+            lanePowerGain = 0.6;
 
             laneMotorPowerIN = 100;
             laneMotorPowerOUT = 100;
@@ -1258,6 +1261,14 @@ void intTimer(void)
             laneCounterMotorPowerIN = 100;
             //
 
+            lowSpeedLimit = 39;
+
+            lowSpeedCrankHandle = 26;
+            lowSpeedCrankDistance = 400;
+
+            lowSpeedLaneHandle = 20;
+            lowSpeedLaneDistance = 400;
+
             if (lineflag_cross)
             {
                 pattern = 21;
@@ -1265,12 +1276,12 @@ void intTimer(void)
             else if (lineflag_right)
             {
                 pattern = 51;
-                trace_offset = -5;
+                trace_offset = 0;
             }
             else if (lineflag_left)
             {
                 pattern = 61;
-                trace_offset = 5;
+                trace_offset = -0;
             }
         }
 
@@ -1325,8 +1336,21 @@ void intTimer(void)
         {
             crankMotorPowerIN = -95;
         }
-        if(crankHandleVal>43){
-            crankHandleVal=43;
+        if (crankHandleVal > 45)
+        {
+            crankHandleVal = 45;
+        }
+
+        if (encoder.getCnt() <= lowSpeedLimit)
+        {
+            crankHandleVal = lowSpeedCrankHandle;
+            crankDistance = lowSpeedCrankDistance;
+        }
+
+        if (encoder.getCnt() >= 48)
+        {
+            crankMotorPowerOUT = 90;
+            crankMotorPowerIN = 90;
         }
 
         if (lineflag_left)
@@ -1490,6 +1514,10 @@ void intTimer(void)
             pattern = 55;
             led_m(100, 1, 0, 0);
             LANE_DISTANCE
+            if (encoder.getCnt() <= lowSpeedLimit)
+            {
+                laneDistance = lowSpeedLaneDistance;
+            }
             encoder.clear();
         }
         break;
@@ -1502,7 +1530,7 @@ void intTimer(void)
         {
 
             pattern = 56;
-            LANE_DISTANCE
+
             led_m(100, 0, 0, 0);
             encoder.clear();
         }
@@ -1516,6 +1544,7 @@ void intTimer(void)
         {
 
             pattern = 57;
+
             led_m(100, 0, 0, 1);
             encoder.clear();
         }
@@ -1607,6 +1636,10 @@ void intTimer(void)
             pattern = 65;
             led_m(100, 1, 0, 0);
             LANE_DISTANCE
+            if (encoder.getCnt() <= lowSpeedLimit)
+            {
+                laneDistance = lowSpeedLaneDistance;
+            }
             encoder.clear();
         }
         break;
@@ -1620,7 +1653,7 @@ void intTimer(void)
 
             pattern = 66;
             led_m(100, 0, 0, 0);
-            LANE_DISTANCE
+
             encoder.clear();
         }
         break;
@@ -1633,6 +1666,7 @@ void intTimer(void)
         {
 
             pattern = 67;
+
             led_m(100, 0, 0, 1);
             encoder.clear();
         }
@@ -2118,7 +2152,7 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 50, 45); // ラインを検出する行数
+    volatile int centerRowNum = map(encoder.getCnt(), 30, 50, 50, 44); // ラインを検出する行数
 
     volatile int centerWidth = centerRowNum + 9; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
@@ -2169,7 +2203,6 @@ void createLineFlag(int rowNum, int height)
     {
         crossCountThreshold = crosslineWidth - 10;
         brightnessThreshold = maxBrightness * 0.66;
-
     }
     for (int y = rowNum; y < rowNum + height; y++)
     {
@@ -2682,6 +2715,11 @@ void createHandleVal(void)
         traceLine = nearTraceLine;
     }
 
+    if (pattern != 11)
+    {
+        traceLine = flagLine;
+    }
+
     volatile signed int centerTraceLine = traceLine + 20;
     volatile signed int frontTraceLine = 110;
 
@@ -2692,52 +2730,51 @@ void createHandleVal(void)
     //     allDeviationWa += allDeviation[i];
     // }
     // deviationDifference = abs(allDeviationWa);
-    // if (pattern==52 ||pattern==53/*&& allDeviation[traceLine] < 25*/)
-    // {
-    //     traceLine = 50;
-    //     handleVal = allDeviation[traceLine] * 0.5;
-    // }
-    // else
-    //{
-    if (abs(allDeviation[traceLine]) <= straightDeviation)
+    if (pattern !=11)
     {
-        handleVal = 0;
-    }
-    else if (abs(allDeviation[traceLine]) <= middleCurveDeviation)
-    {
-        // if (encoder.getCnt() >= limitSpeed)
-        // {
-        handleVal = (allDeviation[traceLine] + trace_offset) * straightCurveGain;
-
-        // }
-        // else
-        // {
-        //     handleVal = allDeviation[traceLine] * abs(middleCurveGain + middleConstEncoderGain + deviationDifference * differenceGain);
-        // }
-    }
-    else if (deviationDifference <= bigCurveDeviation)
-    {
-        // if (encoder.getCnt() >= limitSpeed)
-        // {
-        handleVal = (allDeviation[traceLine] + trace_offset) * abs(encoder.getCnt() * middleEncoderGain + middleConstEncoderGain) / 100;
-        // }
-        // else
-        // {
-        // handleVal = allDeviation[traceLine] * middleCurveGain;
-        // }
+        handleVal = (allDeviation[traceLine] + trace_offset) * 0.4;
     }
     else
     {
-        // if (encoder.getCnt() >= limitSpeed)
-        // {
-        handleVal = (allDeviation[traceLine] + trace_offset) * abs(encoder.getCnt() * bigEncoderGain + deviationDifference) / 100;
-        // }
-        // else
-        // {
-        //     handleVal = allDeviation[traceLine] * bigCurveCurveGain;
-        // }
+        if (abs(allDeviation[traceLine]) <= straightDeviation)
+        {
+            handleVal = 0;
+        }
+        else if (abs(allDeviation[traceLine]) <= middleCurveDeviation)
+        {
+            // if (encoder.getCnt() >= limitSpeed)
+            // {
+            handleVal = (allDeviation[traceLine] + trace_offset) * straightCurveGain;
+
+            // }
+            // else
+            // {
+            //     handleVal = allDeviation[traceLine] * abs(middleCurveGain + middleConstEncoderGain + deviationDifference * differenceGain);
+            // }
+        }
+        else if (deviationDifference <= bigCurveDeviation)
+        {
+            // if (encoder.getCnt() >= limitSpeed)
+            // {
+            handleVal = (allDeviation[traceLine] + trace_offset) * abs(encoder.getCnt() * middleEncoderGain + middleConstEncoderGain) / 100;
+            // }
+            // else
+            // {
+            // handleVal = allDeviation[traceLine] * middleCurveGain;
+            // }
+        }
+        else
+        {
+            // if (encoder.getCnt() >= limitSpeed)
+            // {
+            handleVal = (allDeviation[traceLine] + trace_offset) * abs(encoder.getCnt() * bigEncoderGain + deviationDifference) / 100;
+            // }
+            // else
+            // {
+            //     handleVal = allDeviation[traceLine] * bigCurveCurveGain;
+            // }
+        }
     }
-    // }
 }
 
 void easyCreateDeviation(int rowNum)
