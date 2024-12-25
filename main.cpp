@@ -44,7 +44,7 @@
 // #define LANE_COUNTER_HANDLE_CALK laneCounterHandleVal
 // #define LANE_DISTANCE laneDistance=320
 // #define LANE_DISTANCE laneDistance = encoder.getCnt() * 1 + 260;
-#define LANE_DISTANCE laneDistance = map(encoder.getCnt(), 30, 50, 300, 350);
+#define LANE_DISTANCE laneDistance = map(encoder.getCnt(), 30, 50, 300, 335);
 
 //------------------------------------------------------------------//
 // マスク値設定 ×：マスクあり(無効)　○：マスク無し(有効)
@@ -1266,8 +1266,8 @@ void intTimer(void)
             lowSpeedCrankHandle = 26;
             lowSpeedCrankDistance = 400;
 
-            lowSpeedLaneHandle = 20;
-            lowSpeedLaneDistance = 400;
+            lowSpeedLaneHandle = 14;
+            lowSpeedLaneDistance = 360;
 
             if (lineflag_cross)
             {
@@ -1347,7 +1347,7 @@ void intTimer(void)
             crankDistance = lowSpeedCrankDistance;
         }
 
-        if (encoder.getCnt() >= 48)
+        if (encoder.getCnt() >= 45)
         {
             crankMotorPowerOUT = 90;
             crankMotorPowerIN = 90;
