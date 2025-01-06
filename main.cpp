@@ -1346,9 +1346,9 @@ void intTimer(void)
         {
             crankMotorPowerIN = -95;
         }
-        if (crankHandleVal > 45)
+        if (crankHandleVal > 49)
         {
-            crankHandleVal = 45;
+            crankHandleVal = 49;
         }
 
         if (encoder.getCnt() <= lowSpeedLimit)
