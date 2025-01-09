@@ -41,15 +41,15 @@
 
 // #define LANE_COUNTER_HANDLE_CALK encoder.getCnt() * 0.7 + 12
 
-#define LANE_HANDLE_CALK 26
+#define LANE_HANDLE_CALK 23
 
-#define LANE_COUNTER_HANDLE_CALK 28
+#define LANE_COUNTER_HANDLE_CALK 38
 
 // #define LANE_DISTANCE laneDistance = map(encoder.getCnt(), 40, 50, 280, 350);
 // #define LANE_COUNTER_DISTANCE laneCounterDistance = map(encoder.getCnt(), 40, 50, 350, 330);
 
 #define LANE_DISTANCE laneDistance = 340;
-#define LANE_COUNTER_DISTANCE laneCounterDistance = 290;
+#define LANE_COUNTER_DISTANCE laneCounterDistance = 250;
 
 //------------------------------------------------------------------//
 // マスク値設定 ×：マスクあり(無効)　○：マスク無し(有効)
@@ -974,7 +974,7 @@ void intTimer(void)
         flagLineNomal = 57;
 
         // flagLine = 85 - (encoder.getCnt() * 1);
-        flagLine = /*map(encoder.getCnt(), 40, 50, 40, 35)*/40;
+        flagLine = /*map(encoder.getCnt(), 40, 50, 40, 35)*/41;
         // flagLine = 79 - encoder.getCnt();
         // flagLine = 50;
         if (/*encoder.getCnt() < 47 && */ (pattern == 11 || pattern == 22 || pattern == 52 || pattern == 62))
@@ -1200,7 +1200,7 @@ void intTimer(void)
             led_m(0, 0, 0, 0);
             cnt_msdwritetime = 0;
             pattern = 11;
-            encoder.setvalue(500);
+            encoder.setvalue(680);
             cnt1 = 0;
             break;
         }
@@ -1261,20 +1261,20 @@ void intTimer(void)
             laneHandleVal = 6;
             lanePowerGain = 0.6;
 
-            laneMotorPowerIN = 60;
-            laneMotorPowerOUT = 60;
+            laneMotorPowerIN = 37;//40,60
+            laneMotorPowerOUT = 55;
 
             laneCounterHandleVal = 37;
-            laneCounterMotorPowerOUT = 60;
-            laneCounterMotorPowerIN = 60;
+            laneCounterMotorPowerOUT = 20;
+            laneCounterMotorPowerIN = 20;
             //
 
-            lowSpeedLimit = 33;
+            lowSpeedLimit = 37;
 
-            lowSpeedCrankHandle = 26;
+            lowSpeedCrankHandle = 20;
             lowSpeedCrankDistance = 400;
 
-            lowSpeedLaneHandle = 14;
+            lowSpeedLaneHandle = 17;
             lowSpeedLaneDistance = 360;
 
             if (lineflag_cross)
@@ -1523,17 +1523,19 @@ void intTimer(void)
             pattern = 55;
             led_m(100, 1, 0, 0);
             LANE_DISTANCE
-            // if (encoder.getCnt() <= lowSpeedLimit)
-            // {
-            //     laneDistance = lowSpeedLaneDistance;
-            // }
+            laneHandleVal=LANE_HANDLE_CALK;
+            if (encoder.getCnt() <= lowSpeedLimit)
+            {
+                laneDistance = lowSpeedLaneDistance;
+                laneHandleVal=lowSpeedLaneHandle;
+            }
             encoder.clear();
         }
         break;
 
     case 55:
 
-        handle(-(LANE_HANDLE_CALK));
+        handle(-(laneHandleVal));
         //  createBrakeMotorVal(39);
         // motor(leftBrakeMotor, rightBrakeMotor);
         motor(laneMotorPowerOUT, laneMotorPowerIN);
@@ -1651,18 +1653,20 @@ void intTimer(void)
 
             pattern = 65;
             led_m(100, 1, 0, 0);
-            LANE_DISTANCE
-            // if (encoder.getCnt() <= lowSpeedLimit)
-            // {
-            //     laneDistance = lowSpeedLaneDistance;
-            // }
+             LANE_DISTANCE
+            laneHandleVal=LANE_HANDLE_CALK;
+            if (encoder.getCnt() <= lowSpeedLimit)
+            {
+                laneDistance = lowSpeedLaneDistance;
+                laneHandleVal=lowSpeedLaneHandle;
+            }
             encoder.clear();
         }
         break;
 
     case 65:
 
-        handle(LANE_HANDLE_CALK);
+        handle(laneHandleVal);
         //  createBrakeMotorVal(39);
         // motor(leftBrakeMotor, rightBrakeMotor);
         motor(laneMotorPowerIN, laneMotorPowerOUT);
@@ -2175,7 +2179,10 @@ void createLineFlag(int rowNum, int height)
         crosslineWidth = 60;
         height = 10;
     }
-    volatile int centerRowNum = 50; /* map(encoder.getCnt(), 30, 30, 54, 54); // ラインを検出する行数*/
+    volatile int centerRowNum = 47; /* map(encoder.getCnt(), 30, 30, 54, 54); // ラインを検出する行数*/
+    if(encoder.getCnt()<=37){
+centerRowNum = 50;
+    }
 
     volatile int centerWidth = centerRowNum - 2; // 中心線があるかの検出に中心から何列のデータを使うか指定(中心線の幅数)
 
@@ -2670,11 +2677,11 @@ void createBrakeMotorVal(int targetSpeed)
 {
     volatile signed int largeSpeedThreshold = 5;
     volatile signed int mediumSpeedThreshold = 1;
-    volatile signed int neutralThrottle = 70;
+    volatile signed int neutralThrottle = 83;
 
-    volatile signed int acceleratedThrottle = 93;
+    volatile signed int acceleratedThrottle = 100;
 
-    float encoderBrakeGain = 17;
+    float encoderBrakeGain = 14;
     volatile signed int deviationTargetSpeed = encoder.getCnt() - targetSpeed;
 
     if (targetSpeed >= 43)
@@ -2695,15 +2702,15 @@ void createBrakeMotorVal(int targetSpeed)
     else if (encoder.getCnt() >= targetSpeed + mediumSpeedThreshold)
     {
 
-        if (targetSpeed >= 43)
-        {
-            leftBrakeMotor = 30;
-            rightBrakeMotor = 30;
-        }
-        else{
+        // if (targetSpeed >= 43)
+        // {
+        //     leftBrakeMotor = 30;
+        //     rightBrakeMotor = 30;
+        // }
+        // else{
         leftBrakeMotor = neutralThrottle - deviationTargetSpeed * encoderBrakeGain;
         rightBrakeMotor = neutralThrottle - deviationTargetSpeed * encoderBrakeGain;
-        }
+        //}
     }
     else if (encoder.getCnt() >= targetSpeed)
     {
@@ -2723,15 +2730,15 @@ void createHandleVal(void)
 
     volatile signed int limitSpeed = 45;
 
-    float straightCurveGain = 0.4; // 24
+    float straightCurveGain = 0.37; // 24
     float middleCurveGain = 0.73;
     float bigCurveCurveGain = 0.73;
 
     float middleEncoderGain = 0.27;
     float bigEncoderGain = 0;
 
-    float middleConstEncoderGain = 29;
-    float bigConstEncoderGain = 30;
+    float middleConstEncoderGain = 21;//29
+    float bigConstEncoderGain = 30;//11111
 
     volatile signed int straightDeviation = 0;
     volatile signed int middleCurveDeviation = 7;
