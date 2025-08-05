@@ -1848,13 +1848,13 @@ void motor(int accele_l, int accele_r)
     if (accele_l >= 0)
     {
         // forward
-        Left_motor_signal = 1;
+        Left_motor_signal = 0;
         MTU2TGRC_4 = (long)(MOTOR_PWM_CYCLE - 1) * accele_l / 100;
     }
     else
     {
         // reverse
-        Left_motor_signal = 0;
+        Left_motor_signal = 1;
         MTU2TGRC_4 = (long)(MOTOR_PWM_CYCLE - 1) * (-accele_l) / 100;
     }
 
@@ -1862,13 +1862,13 @@ void motor(int accele_l, int accele_r)
     if (accele_r >= 0)
     {
         // forward
-        Right_motor_signal = 1;
+        Right_motor_signal = 0;
         MTU2TGRD_4 = (long)(MOTOR_PWM_CYCLE - 1) * accele_r / 100;
     }
     else
     {
         // reverse
-        Right_motor_signal = 0;
+        Right_motor_signal = 1;
         MTU2TGRD_4 = (long)(MOTOR_PWM_CYCLE - 1) * (-accele_r) / 100;
     }
 }
